@@ -50,6 +50,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .who{font-size:12px;color:var(--sub)}
   .child-name{font-size:22px;font-weight:800;color:#16233a;letter-spacing:.5px;text-shadow:0 1px 0 rgba(255,255,255,.6)}
   .grade-badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:8px;background:#eef2f7;color:#7c8aa0;border:1px solid #e3e9f0}
+  .page-head{display:flex;justify-content:space-between;align-items:center;margin:12px 12px 4px}
+  .page-head h3{margin:0;font-size:18px;color:#16233a}
+  .add-hw-btn{padding:9px 16px;font-size:15px;box-shadow:0 3px 10px rgba(58,122,254,.35)}
+  .add-child-btn{padding:9px 15px;font-size:14px;box-shadow:0 3px 10px rgba(58,122,254,.35)}
+  .child-card{display:flex;align-items:center;gap:14px}
+  .child-av{flex:none}
+  .child-main{flex:1;min-width:0}
+  .child-grade{font-size:13px;color:var(--sub);margin-top:2px}
+  .child-actions{display:flex;gap:6px;flex-shrink:0}
+  .child-edit-card{display:flex;flex-direction:column}
+  .c-in{flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;box-sizing:border-box}
   .avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.12);background:#eef2f7;display:inline-block;vertical-align:middle;overflow:hidden;box-sizing:border-box;text-align:center;flex:none;min-width:48px;min-height:48px}
   .avatar.sm{width:34px;height:34px;min-width:34px;min-height:34px;font-size:14px}
   .avatar.lg{width:72px;height:72px;min-width:72px;min-height:72px;font-size:26px}
@@ -220,6 +231,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
   <!-- 作业视图 -->
   <section id="homeworkView" data-page-node-id="3tqxU0y3MBSkiHLUg7rpRb">
+    <div class="page-head">
+      <h3 style="margin:0">📚 作业</h3>
+      <button class="btn add-hw-btn" onclick="openEdit()">＋ 添加作业</button>
+    </div>
     <div class="toolbar" data-page-node-id="shvAC60qy2tg322U6n0DLd">
       <div class="seg" id="statusSeg" data-page-node-id="xO3gnzDdf9NnFE9eRU3Me4">
         <button class="on" data-s="all" onclick="setFilter('all')" data-page-node-id="N98gSWPQjE0piAcQLU3jPp">全部</button>
@@ -251,26 +266,12 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
   <!-- 孩子视图 -->
   <section id="familyView" style="display:none" data-page-node-id="9RG1XUihEvwI77CDzDuWqV">
-    <h4>👧 孩子信息</h4>
-    <div id="childrenList" data-page-node-id="q1bEDe2J9DunxbFWcAknKD"></div>
-    <div class="sec" id="childFormSec" data-page-node-id="Yh3Q0GIPx6JcoyDCYfqnXy">
-      <h4 data-page-node-id="unXN6AnUq9YlcAa87qA5Sx">添加 / 编辑孩子</h4>
-      <div class="avatar-pick" data-page-node-id="GmRjmuBCXyA89JrHjejdmH">
-        <div id="childAvatarWrap" data-page-node-id="uRmXIc1wMTeJ1A2K4MTBuX"></div>
-        <div data-page-node-id="LydAZdMuuIqhoRPzWQ2ooK">
-          <label onclick="document.getElementById('childAvatarInput').click()" data-page-node-id="hS4Qajncla8FmdqotcuxBv">上传头像</label>
-          <span class="clr" id="childAvatarClear" style="display:none" onclick="clearChildAvatar()" data-page-node-id="dypGEAsh9oxNICHtHVODv3">清除</span>
-          <input id="childAvatarInput" type="file" accept="image/*" style="display:none" onchange="onChildAvatarPick(event)" data-page-node-id="7Q1L6lCRHd88aL0h4J5VXo" />
-        </div>
-      </div>
-      <div class="row" data-page-node-id="csj3AClGVktiQ1U4QscU3s">
-        <input id="cName" placeholder="姓名，如 小明" data-page-node-id="Q1XVZug7OhvaVNNalDG6RB" />
-        <input id="cGrade" placeholder="年级，如 三年级" style="max-width:140px" data-page-node-id="uVLtjBHFTH3EWDFlwwgevQ" />
-        <button class="btn primary" id="cSaveBtn" onclick="saveChild()" data-page-node-id="Fpjl0YshUMKm2w7yGY96bJ">添加</button>
-        <button class="btn ghost" id="cCancelBtn" onclick="cancelChildEdit()" style="display:none" data-page-node-id="bkseWLyX3skVDnXnBlCliM">取消</button>
-      </div>
+    <div class="page-head">
+      <h3 style="margin:0">👧 孩子信息</h3>
+      <button class="btn add-child-btn" onclick="addChild()">＋ 添加孩子</button>
     </div>
-
+    <div id="childrenList" data-page-node-id="q1bEDe2J9DunxbFWcAknKD"></div>
+    <input id="childAvatarInput" type="file" accept="image/*" style="display:none" onchange="onChildAvatarPick(event)">
     <div class="sec">
       <h4>👪 家庭</h4>
       <p id="familyStatus" class="hint" data-page-node-id="JW31P7Crl6GsimkturbHjD">未加入家庭（仅本机）</p>
@@ -388,7 +389,6 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   <button class="nav-btn" data-nav="settings" onclick="switchTab('settings')"><span class="ic">⚙️</span>设置</button>
 </nav>
 
-<button class="fab" onclick="openEdit()" data-page-node-id="8P9kb1TpzqqCORdGBh5mz0">+</button>
 
 <!-- 编辑弹窗 -->
 <div class="modal" id="editModal" data-page-node-id="XKqF4YC0tf3LU7gqX1qREf">
@@ -1123,25 +1123,37 @@ function childStats(cid){
 function renderChildren(){
   const cs=loadChildren().filter(c=>!c.deletedAt);
   const box=document.getElementById('childrenList');
-  if(!cs.length){ box.innerHTML='<div class="empty">还没有孩子，在下方添加第一个吧</div>'; return; }
+  if(!cs.length && !editingChildId){ box.innerHTML='<div class="empty">还没有孩子，点右上角「＋ 添加孩子」添加吧</div>'; return; }
   box.innerHTML=cs.map(c=>{
-    const s=childStats(c.id);
-    const grade=c.grade?`<span class="grade-badge">${esc(c.grade)}</span>`:'';
-    return `<div class="card">
-      <div class="card-top">
-        <div style="display:flex;align-items:center;gap:10px">${avatarHtml(c.avatar,'sm',(c.name||'孩').slice(0,1))}<span class="child-name">${esc(c.name)}</span>${grade}</div>
-        <span class="who">共 ${s.total} 份作业</span>
+    if(c.id===editingChildId && editingChildDraft){
+      return `<div class="card child-edit-card">
+        <div class="avatar-pick">
+          ${avatarHtml(editingChildDraft.avatar,'lg',(editingChildDraft.name||'孩').slice(0,1))}
+          <div>
+            <label onclick="pickChildAvatar()">上传头像</label>
+            ${editingChildDraft.avatar?'<span class="clr" onclick="clearDraftAvatar()">清除</span>':''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <input class="c-in" style="flex:1;min-width:120px" placeholder="姓名，如 小明" value="${esc(editingChildDraft.name)}" oninput="editingChildDraft.name=this.value">
+          <input class="c-in" style="max-width:150px" placeholder="年级，如 三年级" value="${esc(editingChildDraft.grade)}" oninput="editingChildDraft.grade=this.value">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn primary sm" onclick="saveChild()">保存</button>
+          <button class="btn ghost sm" onclick="cancelChildEdit()">取消</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="card child-card">
+      <div class="child-av">${avatarHtml(c.avatar,'lg',(c.name||'孩').slice(0,1))}</div>
+      <div class="child-main">
+        <div class="child-name">${esc(c.name)}</div>
+        ${c.grade?`<div class="child-grade">${esc(c.grade)}</div>`:''}
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px">
-        <span class="pill" style="background:#e6f7ef;color:var(--green)">✅ 已完成 ${s.done}</span>
-        <span class="pill" style="background:#fff4e5;color:#c77b00">📝 未完成 ${s.incomplete}</span>
-        ${s.overdue?`<span class="pill over">⚠️ 逾期 ${s.overdue}</span>`:''}
+      <div class="child-actions">
+        <button class="btn ghost sm" onclick="editChild('${c.id}')">编辑</button>
+        <button class="btn danger sm" onclick="deleteChild('${c.id}')">删除</button>
       </div>
-      <div style="margin-top:4px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:3px"><span>完成率</span><span>${s.total?Math.round(s.done/s.total*100):0}%</span></div>
-        <div class="bar"><i style="width:${s.total?Math.round(s.done/s.total*100):0}%"></i></div>
-      </div>
-      <div class="card-foot" style="justify-content:flex-end"><button class="btn ghost sm" onclick="editChild('${c.id}')">编辑</button><button class="btn danger sm" onclick="deleteChild('${c.id}')">删除</button></div>
     </div>`;
   }).join('');
 }
@@ -1527,55 +1539,44 @@ function closeImg(){
 
 /* ============ 孩子 ============ */
 let editingChildId=null;
-let editingChildAvatar='';
-function renderChildAvatarPick(){
-  if(document.getElementById('childAvatarWrap')) document.getElementById('childAvatarWrap').innerHTML = avatarHtml(editingChildAvatar,'lg',(document.getElementById('cName').value.trim().slice(0,1)||'孩'));
-  if(document.getElementById('childAvatarClear')) document.getElementById('childAvatarClear').style.display = editingChildAvatar?'inline':'none';
-}
+let editingChildIsNew=false;
+let editingChildDraft=null;
+function pickChildAvatar(){ const el=document.getElementById('childAvatarInput'); if(el) el.click(); }
 function onChildAvatarPick(e){
   const file=e.target.files&&e.target.files[0]; if(!file)return;
-  openAvatarEditor(file, d=>{ if(d){ editingChildAvatar=d; renderChildAvatarPick(); } });
+  openAvatarEditor(file, d=>{ if(d && editingChildDraft){ editingChildDraft.avatar=d; renderChildren(); } });
   e.target.value='';
 }
-function clearChildAvatar(){ editingChildAvatar=''; renderChildAvatarPick(); }
+function clearDraftAvatar(){ if(editingChildDraft){ editingChildDraft.avatar=''; renderChildren(); } }
+function addChild(){
+  const nc={id:uid(),name:'',grade:'',avatar:''};
+  const cs=loadChildren(); cs.push(nc); saveChildren(cs);
+  editingChildId=nc.id; editingChildIsNew=true; editingChildDraft={name:'',grade:'',avatar:''};
+  renderChildren();
+}
 function editChild(id){
   const c=loadChildren().find(x=>x.id===id); if(!c)return;
-  editingChildId=id; editingChildAvatar=c.avatar||'';
-  document.getElementById('cName').value=c.name;
-  document.getElementById('cGrade').value=c.grade||'';
-  document.getElementById('cSaveBtn').textContent='保存修改';
-  document.getElementById('cCancelBtn').style.display='inline-block';
-  renderChildAvatarPick();
-  // 在原「添加/编辑」区块内修改：滚动到该区块，便于直接编辑
-  const sec=document.getElementById('childFormSec');
-  if(sec){ sec.scrollIntoView({behavior:'smooth', block:'start'}); }
-  const nameEl=document.getElementById('cName');
-  if(nameEl){ nameEl.focus({preventScroll:true}); }
+  editingChildId=id; editingChildIsNew=false;
+  editingChildDraft={name:c.name||'',grade:c.grade||'',avatar:c.avatar||''};
+  renderChildren();
 }
 function cancelChildEdit(){
-  editingChildId=null; editingChildAvatar='';
-  document.getElementById('cName').value='';
-  document.getElementById('cGrade').value='';
-  document.getElementById('cSaveBtn').textContent='添加';
-  document.getElementById('cCancelBtn').style.display='none';
-  renderChildAvatarPick();
+  if(editingChildIsNew && editingChildId){
+    const cs=loadChildren().filter(x=>x.id!==editingChildId); saveChildren(cs);
+  }
+  editingChildId=null; editingChildIsNew=false; editingChildDraft=null;
+  renderChildren();
 }
 function saveChild(){
-  const name=document.getElementById('cName').value.trim();
-  const grade=document.getElementById('cGrade').value.trim();
+  const d=editingChildDraft||{name:'',grade:'',avatar:''};
+  const name=(d.name||'').trim();
   if(!name){ toast('请输入姓名'); return; }
   const cs=loadChildren();
-  if(editingChildId){
-    const c=cs.find(x=>x.id===editingChildId);
-    if(c){ c.name=name; c.grade=grade; c.avatar=editingChildAvatar||''; }
-    toast('已更新 '+name);
-  } else {
-    cs.push({id:uid(),name,grade,avatar:editingChildAvatar||''});
-    toast('已添加 '+name);
-  }
+  const c=cs.find(x=>x.id===editingChildId);
+  if(c){ c.name=name; c.grade=(d.grade||'').trim(); c.avatar=d.avatar||''; }
   saveChildren(cs);
-  cancelChildEdit();
-  renderChildren();
+  editingChildId=null; editingChildIsNew=false; editingChildDraft=null;
+  renderChildren(); fillChildFilter();
 }
 function deleteChild(id){
   if(!confirm('删除孩子会保留其历史作业，仅从孩子列表移除，确定？'))return;
