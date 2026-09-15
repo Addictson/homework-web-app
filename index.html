@@ -505,8 +505,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <!-- 部分打卡弹窗 -->
 <div class="modal" id="checkModal" data-page-node-id="X4UvPNYDsiJgyx8qJZZkv6">
   <div class="sheet" data-page-node-id="PhxOQspRbkHkxWcVAj5zUw">
-    <span class="close" onclick="closeCheck()" data-page-node-id="nAaIeSQvloI9jq4MfApGTk">✕</span>
-    <h3 id="checkTitle" data-page-node-id="WnZhzGhTjGjb4WgBarBIGK">作业打卡</h3>
+    <div class="sheet-head">
+      <div class="h-title" id="checkTitle" data-page-node-id="WnZhzGhTjGjb4WgBarBIGK">作业打卡</div>
+      <button class="x" type="button" onclick="closeCheck()" data-page-node-id="nAaIeSQvloI9jq4MfApGTk">✕</button>
+    </div>
     <div id="checkBody" data-page-node-id="f58yZQja6iOVYTOOITbYPw"></div>
     <div class="row" style="margin-top:12px" data-page-node-id="rLHCgXvQ5PRhJR192HKcS0">
       <button class="btn green" onclick="checkAll(true)" data-page-node-id="4AzfhZhNgwpeUOC9aCKRmz">全部完成</button>
