@@ -78,11 +78,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .thumbs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
   .thumbs img{width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer}
   .card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
-  .card-body{flex:1;min-width:0}
-  .card-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;justify-content:center}
+  .card-left{flex:0 0 150px;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .card-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+  .card-actions{display:flex;flex-direction:column;gap:6px;flex:0 0 96px;justify-content:center}
   .card-actions .btn{width:100%;white-space:nowrap}
-  .subject-big{font-size:19px;font-weight:800;color:var(--blue);line-height:1.2;margin-bottom:5px}
-  .who-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+  .subject-big{font-size:19px;font-weight:800;color:var(--blue);line-height:1.2;margin-bottom:2px}
+  .who-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px}
+  .card-left .meta{flex-direction:column;align-items:flex-start;gap:2px;margin-top:4px}
   .btn{border:0;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer}
   .btn.primary{background:var(--blue);color:#fff}
   .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
@@ -174,6 +176,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     .content{font-size:14px}
     .subject-big{font-size:17px}
     .card-actions .btn{font-size:12px;padding:6px 8px}
+    /* 手机端：三栏改为竖向堆叠，避免挤压 */
+    .card{flex-wrap:wrap;gap:8px;padding:10px}
+    .card-left{flex:1 1 100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 12px}
+    .card-left .subject-big{flex:1 1 100%;margin-bottom:0}
+    .card-left .meta{flex-direction:row;flex-wrap:wrap;margin-top:0;gap:8px}
+    .card-mid{flex:1 1 100%}
+    .card-actions{flex:1 1 100%;flex-direction:row;flex-wrap:wrap;justify-content:flex-start}
+    .card-actions .btn{width:auto}
   }
   /* 桌面自适应：更宽，作业卡片自动双列 */
   @media (min-width:768px){
@@ -1067,20 +1077,23 @@ function cardHtml(h){
   const gradeBadge=(h.images&&h.images.length)?`<button class="btn ghost sm" onclick="openGrade('${h.id}')">批改${graden?'(已标'+graden+')':''}</button>`:'';
   const statusLabel = done?'✅ 已完成':(eff==='doing'?'🔄 进行中':'⏳ 待完成');
   return `<div class="card ${done?'done':''}">
-    <div class="card-body">
+    <div class="card-left">
       ${h.subject?`<div class="subject-big">${esc(h.subject)}</div>`:''}
       <div class="who-row">
-        <span class="who" style="display:flex;align-items:center;gap:6px">${avatarHtml(cavatar,'sm',(h.childName||'—').slice(0,1))}<span>👤 ${esc(h.childName||'—')} · ${esc(h.uploader||'我')}</span></span>
+        <span class="who" style="display:flex;align-items:center;gap:6px">${avatarHtml(cavatar,'sm',(h.childName||'—').slice(0,1))}<span>👤 ${esc(h.childName||'—')}</span></span>
         <span class="who">${statusLabel}</span>
       </div>
+      <div class="who" style="font-size:12px">📤 上传：${esc(h.uploader||'我')}</div>
       ${tags?`<div>${tags}</div>`:''}
       ${prog?`<div class="progline">${prog}</div>`:''}
-      ${h.content?`<div class="content">${esc(h.content)}</div>`:''}
       <div class="meta">
         <span class="${overdue?'red':''}">截止：${esc(h.dueDate||'—')}</span>
         ${h.pageFrom?`<span>页码：${esc(h.pageFrom)}-${esc(h.pageTo)}</span>`:''}
         ${link}
       </div>
+    </div>
+    <div class="card-mid">
+      ${h.content?`<div class="content">${esc(h.content)}</div>`:''}
       ${imgs}
     </div>
     <div class="card-actions">
