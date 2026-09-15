@@ -105,15 +105,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .fab{position:fixed;right:18px;bottom:74px;width:54px;height:54px;border-radius:50%;background:var(--blue);color:#fff;
        border:0;font-size:28px;line-height:54px;text-align:center;box-shadow:0 4px 12px rgba(58,122,254,.4);cursor:pointer;z-index:30}
   .empty{text-align:center;color:var(--sub);padding:40px 20px}
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:40;align-items:flex-end;justify-content:center}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:40;align-items:center;justify-content:center;padding:16px}
   .modal.show{display:flex}
   .img-modal{background:rgba(0,0,0,.92);align-items:center;justify-content:center;padding:16px}
   .img-modal .img-wrap{position:relative;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;align-items:center}
   .img-modal img{max-width:96vw;max-height:80vh;border-radius:10px;background:#fff}
-  .img-close{position:absolute;top:-42px;right:0;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:7px 16px;font-size:14px;cursor:pointer}
-  .sheet{background:#fff;width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px 24px}
+  .img-close{position:absolute;top:-46px;right:0;background:#fff;color:#e23b3b;border:2px solid #e23b3b;border-radius:24px;padding:8px 18px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+  .sheet{background:#fff;width:100%;max-width:680px;max-height:calc(100vh - 40px);overflow:auto;border-radius:16px;padding:8px 18px 22px;box-shadow:0 12px 44px rgba(0,0,0,.28)}
   .sheet h3{margin:0 0 14px;font-size:18px}
-  .sheet .close{float:right;font-size:20px;color:var(--sub);cursor:pointer;line-height:1}
+  .sheet .close{position:sticky;top:0;z-index:6;display:block;text-align:right;font-size:27px;font-weight:800;color:#999;cursor:pointer;line-height:1;background:linear-gradient(#fff 70%,rgba(255,255,255,0));padding:6px 0 12px;margin:-8px -18px 0}
   .cm-title{font-size:17px;font-weight:700;margin-bottom:2px}
   .cm-msg{font-size:15px;color:var(--ink);margin:12px 2px 18px;line-height:1.6}
   .cm-actions{display:flex;gap:10px}
@@ -405,7 +405,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     </div>
     <div class="field" data-page-node-id="LVvwawyChujanHk0ByiFkV">
       <label data-page-node-id="wGOm17LpSUEIsfkxSCQ664">系列名（如 复习手册，可选）</label>
-      <input id="eSeries" placeholder="复习手册" data-page-node-id="iXHR9CaQtNSOfDCos7G51H" />
+      <input id="eSeries" placeholder="复习手册（首次输入，之后可下拉选择）" list="seriesList" oninput="onSeriesInput()" onchange="onSeriesInput()" data-page-node-id="iXHR9CaQtNSOfDCos7G51H" />
+      <datalist id="seriesList"></datalist>
     </div>
     <div class="field" data-page-node-id="5wUuAEwW4dJaED9ZOvlHhn">
       <label data-page-node-id="DrMosXTWSfNxP8Z8sKphD3">作业内容 / 说明</label>
@@ -416,10 +417,6 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <textarea id="ePaste" placeholder="在此粘贴作业文字，点识别"></textarea>
         <button class="btn primary sm" style="margin-top:6px" onclick="doExtract()" data-page-node-id="CcDn4TUcxf0DdNRtorjzGZ">识别并填充</button>
       </div>
-    </div>
-    <div class="field" data-page-node-id="Nqd9JszTdtwMtzLSm1XelU">
-      <label data-page-node-id="9O8riujnGly68QMYHSM0UY">链接（老师发的作业链接，可选）</label>
-      <input id="eLink" placeholder="https://..." data-page-node-id="tK4L81S9DyBUtLkT2LDoBX" />
     </div>
     <div class="field" data-page-node-id="jdw4NK96EJTjhtpXVsugpW">
       <label data-page-node-id="LBePHGobScjDWYMIVoLQBl">图片（作业纸 / 通知截图，可选）</label>
@@ -433,7 +430,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <div class="field" data-page-node-id="2A2RXrNkf3U8jS3nhBXRww"><label data-page-node-id="SNUmDJ4b3bqifSyC70KX7u">布置日</label><input id="eAssign" type="date" data-page-node-id="m7eHlYYJXY9jC3MhHrwm8z" /></div>
       <div class="field" data-page-node-id="i1hI1qC0FEfK7x5zNO5njH"><label data-page-node-id="wS71n8rceDTRmRArqnIRJx">截止日</label><input id="eDue" type="date" data-page-node-id="PABqsZBy6IcBQvRwHKIASt" /></div>
     </div>
-    <div class="row" data-page-node-id="dslTa12cGuPTEx5Vtq7G4x">
+    <div class="row" id="pageFields" data-page-node-id="dslTa12cGuPTEx5Vtq7G4x">
       <div class="field" data-page-node-id="mnfvEBkpTBoeWenXoigHNP"><label data-page-node-id="uedFJLslnd4hrweDDg1cAt">页码起</label><input id="ePageFrom" type="number" placeholder="12" data-page-node-id="Cc8NN5INKUsPmPMDO6Aco0" /></div>
       <div class="field" data-page-node-id="CeWFFfwRw1ZUPsthUDvXj7"><label data-page-node-id="EaCJTIqN9xbKLgaCaxX1qH">页码止</label><input id="ePageTo" type="number" placeholder="15" data-page-node-id="V8P4zoJIuOaCtax6N37J7P" /></div>
     </div>
@@ -1072,7 +1069,6 @@ function cardHtml(h){
   if(hasPages(h)||(h.subtasks&&h.subtasks.length)) prog+=`<span class="pill">${Math.round(computeProgress(h)*100)}%</span>`;
   let imgs='';
   if(h.images&&h.images.length) imgs=`<div class="thumbs">${h.images.map((s,i)=>`<img src="${s}" onclick="preview(${i},'${h.id}')">`).join('')}</div>`;
-  const link=h.link?`<a href="${esc(h.link)}" target="_blank" style="color:var(--blue)">🔗 打开链接</a>`:'';
   const graden=(h.grading||[]).filter(g=>g&&g.result!=='none').length;
   const gradeBadge=(h.images&&h.images.length)?`<button class="btn ghost sm" onclick="openGrade('${h.id}')">批改${graden?'(已标'+graden+')':''}</button>`:'';
   const statusLabel = done?'✅ 已完成':(eff==='doing'?'🔄 进行中':'⏳ 待完成');
@@ -1089,7 +1085,6 @@ function cardHtml(h){
       <div class="meta">
         <span class="${overdue?'red':''}">截止：${esc(h.dueDate||'—')}</span>
         ${h.pageFrom?`<span>页码：${esc(h.pageFrom)}-${esc(h.pageTo)}</span>`:''}
-        ${link}
       </div>
     </div>
     <div class="card-mid">
@@ -1271,6 +1266,18 @@ function fillChildSelect(selId,pick){
   sel.innerHTML=cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   if(pick&&cs.some(c=>c.id===pick)) sel.value=pick;
 }
+function refreshSeriesList(){
+  const all=loadHomework(); const seen={};
+  all.forEach(h=>{ if(h.series) seen[h.series]=1; });
+  const dl=document.getElementById('seriesList');
+  if(dl) dl.innerHTML=Object.keys(seen).map(s=>`<option value="${esc(s)}"></option>`).join('');
+}
+function onSeriesInput(){
+  const v=(document.getElementById('eSeries').value||'').trim();
+  const pf=document.getElementById('pageFields');
+  if(pf) pf.style.display = v ? '' : 'none';
+}
+
 function openEdit(id){
   state.editing=id||null; state.draftImages=[];
   fillSubjectSelect(); fillChildSelect('eChild');
@@ -1282,7 +1289,6 @@ function openEdit(id){
     document.getElementById('eChild').value=h.childId;
     document.getElementById('eSubject').value=h.subject||'其他';
     document.getElementById('eContent').value=h.content||'';
-    document.getElementById('eLink').value=h.link||'';
     document.getElementById('eAssign').value=h.assignDate||'';
     document.getElementById('eDue').value=h.dueDate||'';
     document.getElementById('eSeries').value=h.series||'';
@@ -1294,11 +1300,13 @@ function openEdit(id){
   } else {
     document.getElementById('editTitle').textContent='新增作业';
     document.getElementById('eDelete').style.display='none';
-    ['eContent','eLink','eAssign','eDue','eSeries','ePageFrom','ePageTo','eNote'].forEach(i=>document.getElementById(i).value='');
+    ['eContent','eAssign','eDue','eSeries','ePageFrom','ePageTo','eNote'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('eAssign').value=today();
     document.getElementById('eDue').value=today();
     document.getElementById('eStatus').value='todo';
   }
+  refreshSeriesList();
+  onSeriesInput();
   renderThumbs();
   document.getElementById('editModal').classList.add('show');
 }
@@ -1378,6 +1386,7 @@ function doExtract(){
   if(ex.subject && SUBJECTS.includes(ex.subject)) document.getElementById('eSubject').value=ex.subject;
   if(ex.date) document.getElementById('eDue').value=ex.date;
   if(ex.series) document.getElementById('eSeries').value=ex.series;
+  onSeriesInput();
   if(ex.pageFrom) document.getElementById('ePageFrom').value=ex.pageFrom;
   if(ex.pageTo) document.getElementById('ePageTo').value=ex.pageTo;
   if(t && !document.getElementById('eContent').value) document.getElementById('eContent').value=t.trim();
@@ -1393,7 +1402,6 @@ function saveEdit(){
     childId, childName:child?child.name:'',
     subject:document.getElementById('eSubject').value,
     content:document.getElementById('eContent').value.trim(),
-    link:document.getElementById('eLink').value.trim(),
     assignDate:document.getElementById('eAssign').value,
     dueDate:document.getElementById('eDue').value,
     series:document.getElementById('eSeries').value.trim(),
