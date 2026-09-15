@@ -44,7 +44,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .field>label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
   .row{display:flex;gap:10px}
   .row>*{flex:1}
-  .card{background:var(--card);border-radius:12px;padding:14px;margin:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .card{background:var(--card);border-radius:12px;padding:14px;margin:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;gap:10px;align-items:stretch}
   .card.done{opacity:.62}
   .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
   .who{font-size:12px;color:var(--sub)}
@@ -78,6 +78,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .thumbs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
   .thumbs img{width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer}
   .card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
+  .card-body{flex:1;min-width:0}
+  .card-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;justify-content:center}
+  .card-actions .btn{width:100%;white-space:nowrap}
+  .subject-big{font-size:19px;font-weight:800;color:var(--blue);line-height:1.2;margin-bottom:5px}
+  .who-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
   .btn{border:0;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer}
   .btn.primary{background:var(--blue);color:#fff}
   .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
@@ -167,6 +172,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     .thumbs img{width:84px;height:84px}
     .card{font-size:14px}
     .content{font-size:14px}
+    .subject-big{font-size:17px}
+    .card-actions .btn{font-size:12px;padding:6px 8px}
   }
 </style>
 <script>/* Supabase JS v2 (UMD) — 内联，断网也能打开页面 */
@@ -1013,7 +1020,6 @@ function cardHtml(h){
   const done=isFullyDone(h);
   const eff=effectiveStatus(h);
   let tags='';
-  if(h.subject) tags+=`<span class="pill">${esc(h.subject)}</span>`;
   if(h.series) tags+=`<span class="pill series">${esc(h.series)}</span>`;
   if(overdue) tags+=`<span class="pill over">逾期</span>`;
   let prog='';
@@ -1027,26 +1033,27 @@ function cardHtml(h){
   const gradeBadge=(h.images&&h.images.length)?`<button class="btn ghost sm" onclick="openGrade('${h.id}')">批改${graden?'(已标'+graden+')':''}</button>`:'';
   const statusLabel = done?'✅ 已完成':(eff==='doing'?'🔄 进行中':'⏳ 待完成');
   return `<div class="card ${done?'done':''}">
-    <div class="card-top"><span class="who" style="display:flex;align-items:center;gap:6px">${avatarHtml(cavatar,'sm',(h.childName||'—').slice(0,1))}<span>👤 ${esc(h.childName||'—')} · 上传:${esc(h.uploader||'我')}</span></span>
-      <span class="who">${statusLabel}</span></div>
-    <div>${tags}</div>
-    ${prog?`<div class="progline">${prog}</div>`:''}
-    ${h.content?`<div class="content">${esc(h.content)}</div>`:''}
-    <div class="meta">
-      <span class="${overdue?'red':''}">截止：${esc(h.dueDate||'—')}</span>
-      ${h.pageFrom?`<span>页码：${esc(h.pageFrom)}-${esc(h.pageTo)}</span>`:''}
-      ${link}
+    <div class="card-body">
+      ${h.subject?`<div class="subject-big">${esc(h.subject)}</div>`:''}
+      <div class="who-row">
+        <span class="who" style="display:flex;align-items:center;gap:6px">${avatarHtml(cavatar,'sm',(h.childName||'—').slice(0,1))}<span>👤 ${esc(h.childName||'—')} · ${esc(h.uploader||'我')}</span></span>
+        <span class="who">${statusLabel}</span>
+      </div>
+      ${tags?`<div>${tags}</div>`:''}
+      ${prog?`<div class="progline">${prog}</div>`:''}
+      ${h.content?`<div class="content">${esc(h.content)}</div>`:''}
+      <div class="meta">
+        <span class="${overdue?'red':''}">截止：${esc(h.dueDate||'—')}</span>
+        ${h.pageFrom?`<span>页码：${esc(h.pageFrom)}-${esc(h.pageTo)}</span>`:''}
+        ${link}
+      </div>
+      ${imgs}
     </div>
-    ${imgs}
-    <div class="card-foot">
-      <div>
-        <button class="btn ${done?'ghost':'green'} sm" onclick="toggleComplete('${h.id}')">${done?'取消打卡':'✅ 打卡完成'}</button>
-        <button class="btn ghost sm" onclick="openCheck('${h.id}')">📝 部分打卡</button>
-        ${gradeBadge}
-      </div>
-      <div>
-        <button class="btn ghost sm" onclick="openEdit('${h.id}')">编辑</button>
-      </div>
+    <div class="card-actions">
+      <button class="btn ${done?'ghost':'green'} sm" onclick="toggleComplete('${h.id}')">${done?'↩️':'✅完成'}</button>
+      <button class="btn ghost sm" onclick="openCheck('${h.id}')">📝部分</button>
+      ${gradeBadge}
+      <button class="btn ghost sm" onclick="openEdit('${h.id}')">编辑</button>
     </div>
   </div>`;
 }
