@@ -240,7 +240,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   </section>
 
   <!-- 孩子视图 -->
-  <section id="childrenView" style="display:none" data-page-node-id="9RG1XUihEvwI77CDzDuWqV">
+  <section id="familyView" style="display:none" data-page-node-id="9RG1XUihEvwI77CDzDuWqV">
+    <h4>👧 孩子信息</h4>
     <div id="childrenList" data-page-node-id="q1bEDe2J9DunxbFWcAknKD"></div>
     <div class="sec" id="childFormSec" data-page-node-id="Yh3Q0GIPx6JcoyDCYfqnXy">
       <h4 data-page-node-id="unXN6AnUq9YlcAa87qA5Sx">添加 / 编辑孩子</h4>
@@ -259,42 +260,12 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <button class="btn ghost" id="cCancelBtn" onclick="cancelChildEdit()" style="display:none" data-page-node-id="bkseWLyX3skVDnXnBlCliM">取消</button>
       </div>
     </div>
-  </section>
 
-  <!-- 统计视图 -->
-  <section id="statsView" style="display:none" data-page-node-id="uxPJIaDZYcBkMcyIVhn4BF">
-    <div class="stat-grid" id="statGrid" data-page-node-id="ExzxosclDAX5GoFuBicfYM"></div>
-    <div class="sec" data-page-node-id="MKsefBBRAxv0VtKSg4ImCe"><h4 data-page-node-id="Ng8Pvar1fZPHsKqeNwvFss">按科目分布</h4><div id="subjectStat" data-page-node-id="YOZkyCBkyByAAvEVzzg5H0"></div></div>
-    <div class="sec" data-page-node-id="5VBWSUxfUKiWrClBkbhldy"><h4 data-page-node-id="0GQvNHkLSEHzDkZiieaDR5">系列进度（已做页码 / 完成率）</h4><div id="seriesStat" data-page-node-id="cXXI3xMQ7LAk7f96RwQ1d2"></div></div>
-  </section>
-    <!-- 设置视图 -->
-    <section id="settingsView" style="display:none" data-page-node-id="settingsView-1">
-    <div class="sec" data-page-node-id="cGMOg46WtZtMhhj1VhV1bI"><h4 data-page-node-id="6pozHkswnJVmN8oO3vhfos">数据</h4>
-      <button class="btn ghost sm" onclick="exportData()" data-page-node-id="5T3k2BiFvSFBiperLOxx1R">导出备份(JSON)</button>
-      <button class="btn ghost sm" onclick="importData()" data-page-node-id="f93H98Xd2Gp1Ozn0YNLmoT">导入备份</button>
-      <button class="btn danger sm" onclick="clearAll()" data-page-node-id="inw9GZfIOAiJYVSDHRLXd1">清空全部数据</button>
-      <p class="hint" data-page-node-id="pIiBXqIfuX5yXwJ1FcMgXU">数据仅保存在本机浏览器(localStorage)，换设备/清缓存会丢失，请定期导出备份。</p>
-    </div>
-    <div class="sec" data-page-node-id="Y33beEXXVHtgBQZiJhuGFe"><h4 data-page-node-id="ttPUfcjCBuhd8glDg4CFcb">每日提醒（需保持页面打开）</h4>
-      <div class="row" style="align-items:center" data-page-node-id="GrrwTIOq5NzebGTb0RClFM">
-        <label style="flex:none;display:flex;gap:8px;align-items:center;font-size:14px" data-page-node-id="qldwh6eEydwRtX6qIxHSbz"><input type="checkbox" id="reminderOn" style="width:auto" onchange="setReminder()" data-page-node-id="50a38UImlprJLhDcVusWzD"> 开启每日提醒</label>
-        <input type="time" id="reminderTime" value="20:00" style="max-width:130px" onchange="setReminder()" data-page-node-id="GGFgqQmA4ntIfMZFLrypal">
-      </div>
-      <p class="hint" data-page-node-id="6PtmLMKDUozMlGV4pTUqFb">设置后，APP 打开期间会在该时间弹出系统通知 + 页面提示，汇总今日未完成作业。要让"关闭 APP 后也定时弹"，需把网页托管成可安装 PWA 并接推送服务（需后续做）。</p>
-      <button class="btn ghost sm" onclick="testReminder()" data-page-node-id="SSHvc6uHbC07AQue1yUQmN">测试提醒</button>
-    </div>
-<div class="sec" data-page-node-id="bzLoYuEAjBkUXJy3oni745"><h4 data-page-node-id="kFv00PQmbtBYecEhWFWQvS">家庭云同步（多家庭 · 端到端加密）</h4>
+    <div class="sec">
+      <h4>👪 家庭</h4>
       <p id="familyStatus" class="hint" data-page-node-id="JW31P7Crl6GsimkturbHjD">未加入家庭（仅本机）</p>
 
-      <details class="fld" data-page-node-id="6Upx2tHPeG5tKy22JJGYjH"><summary data-page-node-id="OYXFquuiQf3ellP3qIO9lm">云服务配置（Supabase）</summary>
-        <div class="field" data-page-node-id="bPzcIOFVO7zhmHgQBIpEUR"><label data-page-node-id="dC0oggw7e4BesOhEiQNMW5">Supabase URL</label><input id="cloudUrl" placeholder="https://xxxx.supabase.co" data-page-node-id="lbkybKCmfN9zoI4L9aUfSO" /></div>
-        <div class="field" data-page-node-id="FmLGpcIWfFMV36njbq9R7Q"><label data-page-node-id="euCyvNPRRMx79iyaI6KyfP">Anon Key / Publishable Key（公开，可放心填入；下方显示为密文）</label><input id="cloudKey" type="password" placeholder="sb_publishable_... 或 eyJ..." data-page-node-id="TE3BbkdvfSrCaD85HJUiJV" /></div>
-        <button class="btn primary sm" onclick="saveCloudConfig()" data-page-node-id="RB22bD3aEtowdc9xSbDcUa">保存云服务配置</button>
-        <button class="btn ghost sm" onclick="copySetupLink()" data-page-node-id="UXjU5J9hOTYMY8bGuPZTDP">🔗 复制「好友自建」邀请链接</button>
-        <p class="hint" data-page-node-id="ermlE1qIDDYt0QF3mljQAa">此链接仅含你的云服务配置、不含家庭信息；朋友打开后免填配置，可直接创建自己的新家庭（彼此数据端到端加密、互不可见）。</p>
-      </details>
-
-      <div id="familyJoinBox" data-page-node-id="bDeSIp2jpuhZvFzVOY2FVW">
+            <div id="familyJoinBox" data-page-node-id="bDeSIp2jpuhZvFzVOY2FVW">
         <div class="fbox" data-page-node-id="rUrJ1oogQO2ZWGtzRZREvC">
           <b data-page-node-id="lZn7YyZuyBtbM1ipWcvqFe">创建家庭</b>
           <div class="field" data-page-node-id="udXDdVTGUP4s09GHU0mZWm"><label data-page-node-id="QNs5rAlzNE2TH967CkuV0Y">家庭名称</label><input id="newFamName" placeholder="如 穆家" data-page-node-id="kSVqhdkxD6XYYnCUBf3UtJ" /></div>
@@ -345,6 +316,41 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       </div>
       <p class="hint" data-page-node-id="XtEWcdSGszA3wck0Q56BEh">不同家庭的数据端到端加密、互不可见；同一家庭成员点击「分享家庭」链接即可加入，并在各设备/浏览器间自动同步。</p>
     </div>
+  </section>
+
+  <!-- 统计视图 -->
+  <section id="statsView" style="display:none" data-page-node-id="uxPJIaDZYcBkMcyIVhn4BF">
+    <div class="stat-grid" id="statGrid" data-page-node-id="ExzxosclDAX5GoFuBicfYM"></div>
+    <div class="sec" data-page-node-id="MKsefBBRAxv0VtKSg4ImCe"><h4 data-page-node-id="Ng8Pvar1fZPHsKqeNwvFss">按科目分布</h4><div id="subjectStat" data-page-node-id="YOZkyCBkyByAAvEVzzg5H0"></div></div>
+    <div class="sec" data-page-node-id="5VBWSUxfUKiWrClBkbhldy"><h4 data-page-node-id="0GQvNHkLSEHzDkZiieaDR5">系列进度（已做页码 / 完成率）</h4><div id="seriesStat" data-page-node-id="cXXI3xMQ7LAk7f96RwQ1d2"></div></div>
+  </section>
+    <!-- 设置视图 -->
+    <section id="settingsView" style="display:none" data-page-node-id="settingsView-1">
+    <div class="sec" data-page-node-id="cGMOg46WtZtMhhj1VhV1bI"><h4 data-page-node-id="6pozHkswnJVmN8oO3vhfos">数据</h4>
+      <button class="btn ghost sm" onclick="exportData()" data-page-node-id="5T3k2BiFvSFBiperLOxx1R">导出备份(JSON)</button>
+      <button class="btn ghost sm" onclick="importData()" data-page-node-id="f93H98Xd2Gp1Ozn0YNLmoT">导入备份</button>
+      <button class="btn danger sm" onclick="clearAll()" data-page-node-id="inw9GZfIOAiJYVSDHRLXd1">清空全部数据</button>
+      <p class="hint" data-page-node-id="pIiBXqIfuX5yXwJ1FcMgXU">数据仅保存在本机浏览器(localStorage)，换设备/清缓存会丢失，请定期导出备份。</p>
+    </div>
+    <div class="sec" data-page-node-id="Y33beEXXVHtgBQZiJhuGFe"><h4 data-page-node-id="ttPUfcjCBuhd8glDg4CFcb">每日提醒（需保持页面打开）</h4>
+      <div class="row" style="align-items:center" data-page-node-id="GrrwTIOq5NzebGTb0RClFM">
+        <label style="flex:none;display:flex;gap:8px;align-items:center;font-size:14px" data-page-node-id="qldwh6eEydwRtX6qIxHSbz"><input type="checkbox" id="reminderOn" style="width:auto" onchange="setReminder()" data-page-node-id="50a38UImlprJLhDcVusWzD"> 开启每日提醒</label>
+        <input type="time" id="reminderTime" value="20:00" style="max-width:130px" onchange="setReminder()" data-page-node-id="GGFgqQmA4ntIfMZFLrypal">
+      </div>
+      <p class="hint" data-page-node-id="6PtmLMKDUozMlGV4pTUqFb">设置后，APP 打开期间会在该时间弹出系统通知 + 页面提示，汇总今日未完成作业。要让"关闭 APP 后也定时弹"，需把网页托管成可安装 PWA 并接推送服务（需后续做）。</p>
+      <button class="btn ghost sm" onclick="testReminder()" data-page-node-id="SSHvc6uHbC07AQue1yUQmN">测试提醒</button>
+    </div>
+    <div class="sec">
+      <h4>云端同步设置（Supabase）</h4>
+<details class="fld" data-page-node-id="6Upx2tHPeG5tKy22JJGYjH"><summary data-page-node-id="OYXFquuiQf3ellP3qIO9lm">云服务配置（Supabase）</summary>
+        <div class="field" data-page-node-id="bPzcIOFVO7zhmHgQBIpEUR"><label data-page-node-id="dC0oggw7e4BesOhEiQNMW5">Supabase URL</label><input id="cloudUrl" placeholder="https://xxxx.supabase.co" data-page-node-id="lbkybKCmfN9zoI4L9aUfSO" /></div>
+        <div class="field" data-page-node-id="FmLGpcIWfFMV36njbq9R7Q"><label data-page-node-id="euCyvNPRRMx79iyaI6KyfP">Anon Key / Publishable Key（公开，可放心填入；下方显示为密文）</label><input id="cloudKey" type="password" placeholder="sb_publishable_... 或 eyJ..." data-page-node-id="TE3BbkdvfSrCaD85HJUiJV" /></div>
+        <button class="btn primary sm" onclick="saveCloudConfig()" data-page-node-id="RB22bD3aEtowdc9xSbDcUa">保存云服务配置</button>
+        <button class="btn ghost sm" onclick="copySetupLink()" data-page-node-id="UXjU5J9hOTYMY8bGuPZTDP">🔗 复制「好友自建」邀请链接</button>
+        <p class="hint" data-page-node-id="ermlE1qIDDYt0QF3mljQAa">此链接仅含你的云服务配置、不含家庭信息；朋友打开后免填配置，可直接创建自己的新家庭（彼此数据端到端加密、互不可见）。</p>
+      </details>
+      <p class="hint">配置好云服务后，到「家庭」页创建或加入家庭，即可开启多设备端到端加密同步。</p>
+    </div>
     <div class="sec">
       <h4>使用介绍</h4>
       <p class="hint">• 添加作业：点右下角 ＋，填写科目、文字/链接、上传图片，选截止日期与孩子，保存即同步。</p>
@@ -368,7 +374,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <nav class="bottom-nav" id="bottomNav" data-page-node-id="nav-bottom-1">
   <button class="nav-btn active" data-nav="homework" onclick="switchTab('homework')"><span class="ic">📚</span>作业</button>
   <button class="nav-btn" data-nav="stats" onclick="switchTab('stats')"><span class="ic">📊</span>统计</button>
-  <button class="nav-btn" data-nav="children" onclick="switchTab('children')"><span class="ic">🧒</span>孩子</button>
+  <button class="nav-btn" data-nav="family" onclick="switchTab('family')"><span class="ic">👪</span>家庭</button>
   <button class="nav-btn" data-nav="settings" onclick="switchTab('settings')"><span class="ic">⚙️</span>设置</button>
 </nav>
 
@@ -948,7 +954,7 @@ const state={ tab:'homework', filter:'all', group:'date', childFilter:'all', edi
 /* ============ 渲染 ============ */
 function render(){
   if(state.tab==='homework'){ renderHomework(); renderToday(); }
-  else if(state.tab==='children') renderChildren();
+  else if(state.tab==='family') renderChildren();
   else if(state.tab==='settings') renderSettings();
   else renderStats();
 }
@@ -963,7 +969,7 @@ function switchTab(t){
   state.tab=t;
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.toggle('active',el.dataset.nav===t));
   document.getElementById('homeworkView').style.display = t==='homework'?'block':'none';
-  document.getElementById('childrenView').style.display = t==='children'?'block':'none';
+  document.getElementById('familyView').style.display = t==='family'?'block':'none';
   document.getElementById('statsView').style.display = t==='stats'?'block':'none';
   document.getElementById('settingsView').style.display = t==='settings'?'block':'none';
   if(t==='settings') renderSettings(); else render();
