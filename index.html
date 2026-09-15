@@ -53,7 +53,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .field>label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
   .row{display:flex;gap:10px}
   .row>*{flex:1}
-  .card{background:var(--card);border-radius:12px;padding:14px;margin:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;gap:10px;align-items:stretch}
+  .card{background:var(--card);border-radius:12px;padding:14px;margin:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
   .card.done{opacity:.62}
   .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
   .who{font-size:12px;color:var(--sub)}
@@ -100,8 +100,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
   .card-left{flex:0 0 150px;min-width:0;display:flex;flex-direction:column;gap:4px}
   .card-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
-  .card-actions{display:flex;flex-direction:column;gap:6px;flex:0 0 96px;justify-content:center}
-  .card-actions .btn{width:100%;white-space:nowrap}
+  .card-actions{display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;flex:1 1 100%;margin-top:10px}
+  .card-actions .btn{flex:1 1 0;min-width:84px;width:auto;white-space:nowrap}
+  .card-actions .btn.sm{padding:11px 8px;font-size:14px;min-height:44px;line-height:1.2}
   .subject-big{font-size:19px;font-weight:800;color:var(--blue);line-height:1.2;margin-bottom:2px}
   .who-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px}
   .card-left .meta{flex-direction:column;align-items:flex-start;gap:2px;margin-top:4px}
@@ -1128,7 +1129,7 @@ function cardHtml(h){
     </div>
     <div class="card-actions">
       <button class="btn ${done?'ghost':'green'} sm" onclick="toggleComplete('${h.id}')">${done?'↩️':'✅完成'}</button>
-      <button class="btn outline sm" onclick="openCheck('${h.id}')">📝部分</button>
+      <button class="btn outline sm" onclick="openCheck('${h.id}')">📝完成部分</button>
       <button class="btn primary sm" onclick="openEdit('${h.id}')">编辑</button>
     </div>
   </div>`;
