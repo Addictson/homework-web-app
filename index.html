@@ -91,6 +91,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .fam-name-input{font-size:18px;font-weight:800;color:#16233a;width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;margin-bottom:8px;font-family:inherit}
   .fam-name-input:hover{border-color:var(--line)}
   .fam-name-input:focus{outline:none;border-color:var(--blue);background:var(--surface)}
+  .field-hint{font-size:12px;color:var(--sub);margin-top:4px;line-height:1.35}
+  .child-edit-fields{display:flex;gap:8px;margin-top:10px}
+  .cef{flex:1;min-width:0;display:flex;flex-direction:column}
+  .cef .c-in{min-width:0}
+  .child-edit-btns{display:flex;gap:8px;margin-top:12px}
+  .child-edit-btns .btn{flex:1}
+  .fam-avatar-box{position:relative;width:72px;height:72px;flex:none;cursor:pointer}
+  .fam-avatar-empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--soft);border:2px dashed var(--blue);border-radius:50%;font-size:12px;color:var(--blue);text-align:center;padding:4px;box-sizing:border-box}
   .grp{font-size:13px;font-weight:700;color:var(--blue);padding:14px 14px 2px}
   .pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:20px;background:var(--tag);color:var(--blue);margin-right:6px}
   .pill.series{background:#fff3e0;color:#c77b00}
@@ -333,25 +341,23 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
       <div id="familyMemberBox" style="display:none" data-page-node-id="eRYXoy5HVMdjP5APIptkuF">
         <div class="fam-card" data-page-node-id="BTFDlt3KYmnXHVa6rYnVlK">
-          <div id="familyAvatarWrap" data-page-node-id="AdeglFB3iILNTyqmU0ZIOx"></div>
+          <div class="fam-avatar-box" onclick="onFamilyAvatarAreaClick()" data-page-node-id="AdeglFB3iILNTyqmU0ZIOx">
+            <div id="familyAvatarWrap"></div>
+            <div class="fam-avatar-empty" id="familyAvatarHint">点击上传</div>
+          </div>
           <div class="fam-meta" data-page-node-id="OdWoQt2nJZ8b6YqwIREt4F">
             <input class="fam-name-input" id="familyInfo" placeholder="家庭名称" onchange="saveFamilyName()" data-page-node-id="u0SFhIhLSHRG9gErTf3xvQ" />
             <div class="fam-member-row" data-page-node-id="i1mHlHaE9fJ7buMnTztw42">
               <input id="cloudMember" placeholder="我的名字（如 爸爸）" data-page-node-id="bWjKIcr9sZW5etfQM5Q4Ln" />
               <button class="btn ghost sm" onclick="saveMember()" data-page-node-id="Vo1lawtoRBB8QfJjr13vQS">保存昵称</button>
             </div>
-            <div class="fam-upload" data-page-node-id="si9dCHoi2O1nSsPfFsS7Oa">
-              <label onclick="document.getElementById('familyAvatarInput').click()" data-page-node-id="nsl4DXnLOSWogdcRTzZJA5">上传家庭头像</label>
-              <span class="clr" id="familyAvatarClear" style="display:none" onclick="clearFamilyAvatar()" data-page-node-id="dgzz1YIG7ZqDaal75lDe07"> · 清除</span>
-              <input id="familyAvatarInput" type="file" accept="image/*" style="display:none" onchange="onFamilyAvatarPick(event)" data-page-node-id="u76A3w23mbqxjJtaYS6dBK" />
-            </div>
+            <input id="familyAvatarInput" type="file" accept="image/*" style="display:none" onchange="onFamilyAvatarPick(event)" data-page-node-id="u76A3w23mbqxjJtaYS6dBK" />
           </div>
         </div>
         <div class="fam-actions" data-page-node-id="GuixMShBmfiEG3O97VD45o">
           <button class="btn ghost sm" onclick="syncNow()" data-page-node-id="rP7oJ4cTeJMGKz4hwxQPeX">立即同步</button>
           <button class="btn ghost sm" onclick="leaveFamily()" data-page-node-id="aw3vUtVoACDcItpZM8N3C1">退出家庭</button>
           <button class="btn primary sm" onclick="shareFamily()" data-page-node-id="UH6SXoygxEfUh7bI9PQLiz">🔗 分享家庭</button>
-          <button class="btn primary sm" onclick="recommendTool()" data-page-node-id="Y7CNtCsdLzV9oLtaFxZQfx">🔗 推荐工具</button>
         </div>
         <div style="margin-top:10px">
           <button class="btn danger" style="width:100%" onclick="dissolveFamily()" data-page-node-id="dJ8kXqLz9mN2pQr4vW6yT1">🗑️ 解散本家庭（删除云端全部数据）</button>
@@ -410,6 +416,11 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <p class="hint">• 不同家庭之间数据互不可见；同一家庭所有成员看到相同内容，需家庭密码一致才能解密。</p>
       <p class="hint">• 多设备同步：任一设备修改后点「立即同步」或重新打开页面即拉取最新；新设备首次打开需联网约 1–2 秒。</p>
       <p class="hint">• 断网可用：看作业、打卡、提醒等核心功能断网照常使用，仅云端同步与图片识别需联网。</p>
+    </div>
+    <div class="sec">
+      <h4>推荐给朋友</h4>
+      <button class="btn primary sm" onclick="recommendTool()">🔗 推荐工具</button>
+      <p class="hint">把链接发给朋友，他打开即配置就绪，可直接创建自己的家庭（数据端到端加密、互不可见）。</p>
     </div>
     </section>
 
@@ -658,14 +669,7 @@ function aeBind(){
   let startDist=1, startScale=1, startMid={x:0,y:0}, startPanX=0, startPanY=0;
   const distOf=()=>{ const p=[...pts.values()]; return Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y)||1; };
   const midOf=()=>{ const p=[...pts.values()]; return {x:(p[0].x+p[1].x)/2, y:(p[0].y+p[1].y)/2}; };
-  stage.addEventListener('pointerdown', e=>{
-    try{ stage.setPointerCapture(e.pointerId); }catch(_){}
-    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    stage.classList.add('dragging');
-    if(pts.size===1){ mode='pan'; ae.lx=e.clientX; ae.ly=e.clientY; }
-    else if(pts.size===2){ mode='pinch'; startDist=distOf(); startScale=ae.scale; startMid=midOf(); startPanX=ae.panX; startPanY=ae.panY; }
-  });
-  stage.addEventListener('pointermove', e=>{
+  const onMove=e=>{
     if(!pts.has(e.pointerId)) return;
     pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(mode==='pan' && pts.size===1){
@@ -676,15 +680,24 @@ function aeBind(){
       ae.panX=startPanX+(mid.x-startMid.x); ae.panY=startPanY+(mid.y-startMid.y);
       aeClamp(); aeRender();
     }
-  });
-  const end=e=>{
+  };
+  const onUp=e=>{
     pts.delete(e.pointerId);
     if(pts.size>=2){ mode='pinch'; startDist=distOf(); startScale=ae.scale; startMid=midOf(); startPanX=ae.panX; startPanY=ae.panY; }
     else if(pts.size===1){ mode='pan'; const r=[...pts.values()][0]; ae.lx=r.x; ae.ly=r.y; }
     else { mode=null; stage.classList.remove('dragging'); }
   };
-  stage.addEventListener('pointerup', end);
-  stage.addEventListener('pointercancel', end);
+  stage.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    stage.classList.add('dragging');
+    if(pts.size===1){ mode='pan'; ae.lx=e.clientX; ae.ly=e.clientY; }
+    else if(pts.size===2){ mode='pinch'; startDist=distOf(); startScale=ae.scale; startMid=midOf(); startPanX=ae.panX; startPanY=ae.panY; }
+  });
+  // 用 window 监听 move/up，避免双指时 setPointerCapture 把第二指事件吞掉（移动端捏合更稳）
+  window.addEventListener('pointermove', onMove, {passive:false});
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
   stage.addEventListener('wheel', e=>{ e.preventDefault(); aeSetScale(ae.scale*(1 - e.deltaY*0.0015)); }, {passive:false});
   document.getElementById('aeZoom').addEventListener('input', e=>{ aeSetScale(ae.baseScale*(1 + e.target.value/100*7)); });
 }
@@ -846,15 +859,29 @@ function renderFamilyPanel(){
   if(document.getElementById('cloudMember')) document.getElementById('cloudMember').value=(f&&f.member)||'我';
   if(document.getElementById('familyInfo')) document.getElementById('familyInfo').value = isJoined? (f.familyName||'') : '';
   const famInitial = (f&&f.familyName&&f.familyName.trim())? f.familyName.trim().charAt(0) : '';
-  if(document.getElementById('familyAvatarWrap')) document.getElementById('familyAvatarWrap').innerHTML = avatarHtml(f&&f.avatar,'lg', famInitial||'家');
-  if(document.getElementById('familyAvatarClear')) document.getElementById('familyAvatarClear').style.display = (isJoined&&f&&f.avatar)?'inline':'none';
+  const faw=document.getElementById('familyAvatarWrap');
+  if(faw) faw.innerHTML = (isJoined&&f&&f.avatar)? avatarHtml(f.avatar,'lg', famInitial||'家') : '';
+  if(document.getElementById('familyAvatarHint')) document.getElementById('familyAvatarHint').style.display = (isJoined&&f&&!f.avatar)?'flex':'none';
 }
 function onFamilyAvatarPick(e){
   const file=e.target.files&&e.target.files[0]; if(!file)return;
-  openAvatarEditor(file, d=>{ if(!d)return; const f=familyState(); if(!f)return; f.avatar=d; setFamily(f); renderFamilyPanel(); pushFamilyMeta(); });
+  openAvatarEditor(file, d=>{ if(!d)return; const f=familyState(); if(!f)return; f.avatar=d; setFamily(f); renderFamilyPanel(); closeFamilyAvatarModal(); pushFamilyMeta(); });
   e.target.value='';
 }
 function clearFamilyAvatar(){ const f=familyState(); if(!f)return; f.avatar=''; setFamily(f); renderFamilyPanel(); pushFamilyMeta(); }
+function onFamilyAvatarAreaClick(){
+  if(!joined()){ toast('请先创建或加入家庭'); return; }
+  const f=familyState();
+  if(f && f.avatar){ openFamilyAvatarModal(); }
+  else { const el=document.getElementById('familyAvatarInput'); if(el) el.click(); }
+}
+function openFamilyAvatarModal(){
+  const f=familyState();
+  const big=document.getElementById('familyAvatarBig');
+  if(big) big.innerHTML = '<div style="width:120px;height:120px;border-radius:50%;overflow:hidden;margin:0 auto;border:2px solid var(--line);background:var(--soft)">'+(f&&f.avatar?('<img src="'+f.avatar+'" style="width:100%;height:100%;object-fit:cover">') : avatarHtml('','lg',(f&&f.familyName||'家').slice(0,1)))+'</div>';
+  const m=document.getElementById('familyAvatarModal'); if(m) m.classList.add('show');
+}
+function closeFamilyAvatarModal(){ const m=document.getElementById('familyAvatarModal'); if(m) m.classList.remove('show'); }
 function saveCloudConfig(){
   const c={ url:document.getElementById('cloudUrl').value.trim(), key:document.getElementById('cloudKey').value.trim() };
   if(!c.url||!c.key){ toast('请填写 Supabase URL 与 Key'); return; }
@@ -1223,13 +1250,19 @@ function renderChildren(){
             ${editingChildDraft.avatar?'<span class="clr" onclick="clearDraftAvatar()">清除</span>':''}
           </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          <input class="c-in" style="flex:1;min-width:120px" placeholder="名字或昵称" value="${esc(editingChildDraft.name)}" oninput="editingChildDraft.name=this.value">
-          <input class="c-in" style="max-width:180px" placeholder="学校，年级（如：实验小学 三年级）" value="${esc(editingChildDraft.grade)}" oninput="editingChildDraft.grade=this.value">
+        <div class="child-edit-fields">
+          <div class="cef">
+            <input class="c-in" value="${esc(editingChildDraft.name)}" oninput="editingChildDraft.name=this.value">
+            <div class="field-hint">输入名字或昵称</div>
+          </div>
+          <div class="cef">
+            <input class="c-in" value="${esc(editingChildDraft.grade)}" oninput="editingChildDraft.grade=this.value">
+            <div class="field-hint">输入学校或班级信息</div>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn primary sm" onclick="saveChild()">保存</button>
-          <button class="btn ghost sm" onclick="cancelChildEdit()">取消</button>
+        <div class="child-edit-btns">
+          <button class="btn primary" onclick="saveChild()">保存</button>
+          <button class="btn ghost" onclick="cancelChildEdit()">取消</button>
         </div>
       </div>`;
     }
@@ -1755,6 +1788,18 @@ function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k))||[] }catch(e
         <button class="btn primary" id="aeConfirm" onclick="aeConfirm()" data-page-node-id="T1pmcxByJzB9oESMaPQjxM">确定</button>
       </div>
       <p class="ae-hint" data-page-node-id="wuxxxvDVIIZ8fM11hYuE6r">单指拖动调整位置，双指捏合缩放，圆形区域即为最终头像。</p>
+    </div>
+  </div>
+</div>
+<div class="modal" id="familyAvatarModal">
+  <div class="sheet" style="max-width:340px">
+    <div class="sheet-head"><span class="h-title">家庭头像</span><button class="x" onclick="closeFamilyAvatarModal()">✕</button></div>
+    <div class="sheet-body" style="text-align:center">
+      <div id="familyAvatarBig" style="margin:8px auto 16px"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn primary" style="flex:1" onclick="document.getElementById('familyAvatarInput').click()">上传修改头像</button>
+        <button class="btn ghost" style="flex:1" onclick="clearFamilyAvatar();closeFamilyAvatarModal()">清除头像</button>
+      </div>
     </div>
   </div>
 </div>
