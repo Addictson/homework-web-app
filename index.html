@@ -99,6 +99,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .mem-name{font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
   .mem-me{font-size:11px;font-weight:700;color:#fff;background:var(--blue);border-radius:999px;padding:1px 8px;white-space:nowrap}
   .mem-sub{font-size:12px;color:var(--sub);margin-top:2px}
+  .mem-del{flex:none;min-width:auto;padding:6px 12px;font-size:13px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--red);cursor:pointer;font-family:inherit}
+  .mem-del:hover{background:var(--soft)}
   .fam-name-input{font-size:18px;font-weight:800;color:#16233a;width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;margin-bottom:8px;font-family:inherit}
   .fam-name-input:hover{border-color:var(--line)}
   .fam-name-input:focus{outline:none;border-color:var(--blue);background:var(--surface)}
@@ -894,6 +896,32 @@ async function pullMembers(){
     return out;
   }catch(e){ console.error('pullMembers',e); if(e && /解密失败/.test(e.message||'')) throw e; return []; }
 }
+async function removeMember(id){
+  if(!id) return;
+  id=String(id).replace(/'/g,'');
+  if(!confirm('确定将该成员从家庭列表中移除？\n\n注意：仅移除其在「家庭成员」列表中的登记，对方本机数据不受影响；对方下次打开本页会重新登记显示。')) return;
+  if(!joined()) return;
+  const sb=getSupabase(); if(!sb) return;
+  try{
+    const f=familyState();
+    await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind',id);
+    toast('已移除该成员');
+    await renderMembers();
+  }catch(e){ toast('移除失败：'+(e&&e.message||e)); }
+}
+function fmtActive(ts){
+  if(!ts) return '尚未同步';
+  const d=new Date(ts), now=new Date();
+  const pad=n=> (n<10?'0':'')+n;
+  const hm=pad(d.getHours())+':'+pad(d.getMinutes());
+  const sameDay=d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
+  if(sameDay) return '今天 '+hm;
+  const y=new Date(now); y.setDate(now.getDate()-1);
+  const yest=d.getFullYear()===y.getFullYear()&&d.getMonth()===y.getMonth()&&d.getDate()===y.getDate();
+  if(yest) return '昨天 '+hm;
+  if(d.getFullYear()===now.getFullYear()) return (d.getMonth()+1)+'月'+d.getDate()+'日 '+hm;
+  return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+hm;
+}
 function relTime(ts){
   if(!ts) return '未知';
   const d=Date.now()-ts;
@@ -913,9 +941,10 @@ async function renderMembers(){
     list.sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0) || (b.lastSeen-a.lastSeen));
     box.innerHTML=list.map(m=>{
       const ph=(m.nick||'我').replace(/\s/g,'').slice(0,1)||'我';
+      const del=m.isMe?'':('<button class="mem-del" onclick="removeMember(\''+String(m.id).replace(/'/g,'')+'\')">移除</button>');
       return '<div class="mem-row">'+ avatarHtml('','sm', ph) +
         '<div class="mem-main"><div class="mem-name">'+esc(m.nick||'我')+(m.isMe?' <span class="mem-me">本人</span>':'')+'</div>'+
-        '<div class="mem-sub">活跃：'+relTime(m.lastSeen)+'</div></div></div>';
+        '<div class="mem-sub">最近活跃：'+fmtActive(m.lastSeen)+'</div></div>'+del+'</div>';
     }).join('');
   }catch(e){
     box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载成员失败：'+(e&&e.message||e)+'</div>';
