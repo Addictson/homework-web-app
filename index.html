@@ -802,8 +802,9 @@ async function pullFamilyMeta(){
     const meta=await decBlob(data.payload, key);
     if(meta===null){ throw new Error('解密失败：家庭密码不正确或数据已损坏'); }
     if(meta){
-      if(meta.name && !f.familyName){ f.familyName=meta.name; }
-      if(meta.avatar && !f.avatar){ f.avatar=meta.avatar; }
+      // 云端为家庭级唯一真相：只要云端有值（含空值，表示已清除）就以云端为准，确保改名/换头像/清除能同步到所有设备
+      f.familyName = (meta.name!==undefined)? meta.name : f.familyName;
+      f.avatar = (meta.avatar!==undefined)? meta.avatar : f.avatar;
       setFamily(f);
     }
   }catch(e){ console.error('pullFamilyMeta',e); if(e && /解密失败/.test(e.message||'')) throw e; }
