@@ -7,6 +7,8 @@
 <meta http-equiv="Pragma" content="no-cache" data-page-node-id="Wplvhm7mLoBlu94F3N3qjq" />
 <meta http-equiv="Expires" content="0" data-page-node-id="riuQvDerWfXHbzGKjm4Eer" />
 <title>家庭作业登记跟踪统计</title>
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%20%22%E5%AE%B6%E5%BA%AD%E4%BD%9C%E4%B8%9A%E7%99%BB%E8%AE%B0%E8%B7%9F%E8%B8%AA%E7%BB%9F%E8%AE%A1%22%2C%20%22short_name%22%3A%20%22%E4%BD%9C%E4%B8%9A%E7%99%BB%E8%AE%B0%22%2C%20%22description%22%3A%20%22%E5%AE%B6%E5%BA%AD%E4%BD%9C%E4%B8%9A%E7%99%BB%E8%AE%B0%E3%80%81%E8%B7%9F%E8%B8%AA%E3%80%81%E7%BB%9F%E8%AE%A1%E4%B8%8E%E6%8F%90%E9%86%92%22%2C%20%22start_url%22%3A%20%22.%22%2C%20%22scope%22%3A%20%22.%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22background_color%22%3A%20%22%23f5f7fb%22%2C%20%22theme_color%22%3A%20%22%233a7afe%22%2C%20%22icons%22%3A%20%5B%7B%22src%22%3A%20%22data%3Aimage/svg%2Bxml%2C%253Csvg%2520xmlns%253D%2522http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520viewBox%253D%25220%25200%252064%252064%2522%253E%253Crect%2520width%253D%252264%2522%2520height%253D%252264%2522%2520rx%253D%252214%2522%2520fill%253D%2522%25233a7afe%2522%252F%253E%253Ctext%2520x%253D%252232%2522%2520y%253D%252233%2522%2520text-anchor%253D%2522middle%2522%2520dominant-baseline%253D%2522central%2522%2520font-size%253D%252238%2522%2520font-weight%253D%2522700%2522%2520fill%253D%2522%2523ffffff%2522%2520font-family%253D%2522sans-serif%2522%253E%25E4%25BD%259C%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%20%22sizes%22%3A%20%22any%22%2C%20%22type%22%3A%20%22image/svg%2Bxml%22%2C%20%22purpose%22%3A%20%22any%20maskable%22%7D%5D%7D">
+  <meta name="theme-color" content="#3a7afe">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMzYTdhZmUiLz48dGV4dCB4PSIzMiIgeT0iMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIiBmb250LXNpemU9IjM4IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+5L2cPC90ZXh0Pjwvc3ZnPg==" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMzYTdhZmUiLz48dGV4dCB4PSIzMiIgeT0iMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIiBmb250LXNpemU9IjM4IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+5L2cPC90ZXh0Pjwvc3ZnPg==" />
 <script>
@@ -188,6 +190,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .nav-btn .ic{font-size:21px;line-height:1}
   .nav-btn.active{color:var(--blue)}
   .nav-btn.active .ic{transform:translateY(-1px)}
+  .nav-btn{position:relative}
+  .nav-badge{position:absolute;top:-1px;right:50%;transform:translateX(13px);min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:#e23b3b;color:#fff;font-size:10px;line-height:16px;text-align:center;font-weight:700;box-shadow:0 0 0 2px var(--surface);box-sizing:border-box}
   @media (max-width:600px){
     .app{max-width:100%}
     .card,.sec,.fbox{margin-left:8px;margin-right:8px;padding:12px}
@@ -382,7 +386,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <label style="flex:none;display:flex;gap:8px;align-items:center;font-size:14px" data-page-node-id="qldwh6eEydwRtX6qIxHSbz"><input type="checkbox" id="reminderOn" style="width:auto" onchange="setReminder()" data-page-node-id="50a38UImlprJLhDcVusWzD"> 开启每日提醒</label>
         <input type="time" id="reminderTime" value="20:00" style="max-width:130px" onchange="setReminder()" data-page-node-id="GGFgqQmA4ntIfMZFLrypal">
       </div>
-      <p class="hint" data-page-node-id="6PtmLMKDUozMlGV4pTUqFb">设置后，APP 打开期间会在该时间弹出系统通知 + 页面提示，汇总今日未完成作业。要让"关闭 APP 后也定时弹"，需把网页托管成可安装 PWA 并接推送服务（需后续做）。</p>
+      <p class="hint" data-page-node-id="6PtmLMKDUozMlGV4pTUqFb">设置后，APP 打开期间会在该时间弹出系统通知 + 页面提示，汇总今日未完成作业。本网页已支持"安装到桌面"：安装后在桌面图标上显示未完成数量角标（安卓 / Chrome / Edge 有效；iPhone 桌面图标因系统限制暂不支持角标，但 App 内「作业」标签仍有红点）。要让"关闭 APP 后也定时弹"，需接推送服务（需后续做）。</p>
       <button class="btn ghost sm" onclick="testReminder()" data-page-node-id="SSHvc6uHbC07AQue1yUQmN">测试提醒</button>
     </div>
     <div class="sec">
@@ -417,7 +421,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 </div>
 
 <nav class="bottom-nav" id="bottomNav" data-page-node-id="nav-bottom-1">
-  <button class="nav-btn active" data-nav="homework" onclick="switchTab('homework')"><span class="ic">📚</span>作业</button>
+  <button class="nav-btn active" data-nav="homework" onclick="switchTab('homework')"><span class="ic">📚</span>作业<span class="nav-badge" id="hwBadge" hidden></span></button>
   <button class="nav-btn" data-nav="stats" onclick="switchTab('stats')"><span class="ic">📊</span>统计</button>
   <button class="nav-btn" data-nav="family" onclick="switchTab('family')"><span class="ic">👪</span>家庭</button>
   <button class="nav-btn" data-nav="settings" onclick="switchTab('settings')"><span class="ic">⚙️</span>设置</button>
@@ -1040,10 +1044,22 @@ const state={ tab:'homework', filter:'all', group:'date', childFilter:'all', edi
 
 /* ============ 渲染 ============ */
 function render(){
+  updateBadges();
   if(state.tab==='homework'){ renderHomework(); renderToday(); }
   else if(state.tab==='family') renderChildren();
   else if(state.tab==='settings') renderSettings();
   else renderStats();
+}
+function updateBadges(){
+  try{
+    const all=loadHomework().filter(h=>!h.deletedAt);
+    const n=all.filter(h=>!h.completed).length;
+    const b=document.getElementById('hwBadge');
+    if(b){ if(n>0){ b.textContent = n>99?'99+':String(n); b.hidden=false; } else { b.hidden=true; } }
+    if('setAppBadge' in navigator){
+      if(n>0){ navigator.setAppBadge(n).catch(function(){}); } else { navigator.clearAppBadge().catch(function(){}); }
+    }
+  }catch(e){}
 }
 function renderSettings(){
   const r=loadReminder();
@@ -1710,6 +1726,8 @@ bootstrap();
 setInterval(()=>{ if(joined()) syncNow(true); }, 30000);
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && joined()) syncNow(true); });
 window.addEventListener('focus', ()=>{ if(joined()) syncNow(true); });
+/* 桌面图标角标（PWA）：注册最小 service worker 让网页可"安装到桌面"，并支持 setAppBadge（安卓/电脑）；iPhone 桌面图标角标系统不支持 */
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
 /* 首屏：只用本机缓存立即渲染，绝不等待网络；云端同步放到后台 */
 /* 已移除"关页面推送"：回到原版——打开即用本机缓存即时显示，页面/App 打开时才弹提醒；书签与桌面应用指向同一链接，数据同源同步 */
 async function bootstrap(){
