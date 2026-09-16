@@ -99,8 +99,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .mem-name{font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
   .mem-me{font-size:11px;font-weight:700;color:#fff;background:var(--blue);border-radius:999px;padding:1px 8px;white-space:nowrap}
   .mem-sub{font-size:12px;color:var(--sub);margin-top:2px}
-  .mem-del{flex:none;min-width:auto;padding:6px 12px;font-size:13px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--red);cursor:pointer;font-family:inherit}
+  .mem-count{font-size:12px;color:var(--sub);padding:2px 2px 8px;font-weight:600}
+  .mem-del{flex:none;min-width:auto;padding:6px 12px;font-size:13px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--red);cursor:pointer;font-family:inherit;-webkit-touch-callout:none;user-select:none;touch-action:manipulation}
   .mem-del:hover{background:var(--soft)}
+  .mem-del.holding{border-color:var(--red);background:var(--soft)}
   .fam-name-input{font-size:18px;font-weight:800;color:#16233a;width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;margin-bottom:8px;font-family:inherit}
   .fam-name-input:hover{border-color:var(--line)}
   .fam-name-input:focus{outline:none;border-color:var(--blue);background:var(--surface)}
@@ -393,6 +395,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         </div>
         <div class="fam-members-sec">
           <div class="fam-sec-title">家庭成员 <span class="fam-sec-sub">（打开本页即登记，成员间互相可见）</span></div>
+          <div class="mem-count" id="memberCount"></div>
           <div id="memberRoster"></div>
         </div>
         <div class="fam-actions" data-page-node-id="GuixMShBmfiEG3O97VD45o">
@@ -933,15 +936,18 @@ function relTime(ts){
 }
 async function renderMembers(){
   const box=document.getElementById('memberRoster'); if(!box) return;
-  if(!joined()){ box.innerHTML=''; return; }
-  box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载成员…</div>';
+  const cnt=document.getElementById('memberCount');
+  const setCnt=n=>{ if(cnt) cnt.textContent = n>0 ? ('共 '+n+' 位成员') : ''; };
+  if(!joined()){ box.innerHTML=''; setCnt(0); return; }
+  box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载成员…</div>'; setCnt(0);
   try{
     const list=await pullMembers();
-    if(!list.length){ box.innerHTML='<div class="hint" style="padding:10px 2px">暂无成员记录。成员需打开「家庭」页才会登记并显示在这里（仅同一家庭密码可见）。</div>'; return; }
+    if(!list.length){ box.innerHTML='<div class="hint" style="padding:10px 2px">暂无成员记录。成员需打开「家庭」页才会登记并显示在这里（仅同一家庭密码可见）。</div>'; setCnt(0); return; }
     list.sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0) || (b.lastSeen-a.lastSeen));
+    setCnt(list.length);
     box.innerHTML=list.map(m=>{
       const ph=(m.nick||'我').replace(/\s/g,'').slice(0,1)||'我';
-      const del=m.isMe?'':('<button class="mem-del" onclick="removeMember(\''+String(m.id).replace(/'/g,'')+'\')">移除</button>');
+      const del=m.isMe?'':('<button class="mem-del" data-rid="'+esc(String(m.id))+'" onpointerdown="memHoldStart(event,this)" onpointerup="memHoldEnd(event,this)" onpointerleave="memHoldEnd(event,this)" onpointercancel="memHoldEnd(event,this)" oncontextmenu="return false">移除</button>');
       return '<div class="mem-row">'+ avatarHtml('','sm', ph) +
         '<div class="mem-main"><div class="mem-name">'+esc(m.nick||'我')+(m.isMe?' <span class="mem-me">本人</span>':'')+'</div>'+
         '<div class="mem-sub">最近活跃：'+fmtActive(m.lastSeen)+'</div></div>'+del+'</div>';
@@ -949,6 +955,21 @@ async function renderMembers(){
   }catch(e){
     box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载成员失败：'+(e&&e.message||e)+'</div>';
   }
+}
+let _memHold=null;
+function memHoldStart(e, btn){
+  e.preventDefault();
+  const rid=btn.getAttribute('data-rid'); if(!rid) return;
+  btn.classList.add('holding');
+  if(_memHold) clearTimeout(_memHold);
+  _memHold=setTimeout(()=>{
+    _memHold=null;
+    btn.classList.remove('holding');
+    removeMember(rid);   // 长按到位 → 弹出确认框（二次确认）
+  }, 600);
+}
+function memHoldEnd(e, btn){
+  if(_memHold){ clearTimeout(_memHold); _memHold=null; btn.classList.remove('holding'); toast('请长按「移除」按钮以确认'); }
 }
 
 async function syncNow(silent){
