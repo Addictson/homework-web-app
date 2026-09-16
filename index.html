@@ -7,6 +7,8 @@
 <meta http-equiv="Pragma" content="no-cache" data-page-node-id="Wplvhm7mLoBlu94F3N3qjq" />
 <meta http-equiv="Expires" content="0" data-page-node-id="riuQvDerWfXHbzGKjm4Eer" />
 <title>家庭作业登记跟踪统计</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMzYTdhZmUiLz48dGV4dCB4PSIzMiIgeT0iMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIiBmb250LXNpemU9IjM4IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+5L2cPC90ZXh0Pjwvc3ZnPg==" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMzYTdhZmUiLz48dGV4dCB4PSIzMiIgeT0iMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIiBmb250LXNpemU9IjM4IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+5L2cPC90ZXh0Pjwvc3ZnPg==" />
 <script>
 /**
  * Minified by jsDelivr using Terser v5.37.0.
@@ -84,6 +86,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .fam-upload{font-size:12px}
   .fam-actions{display:flex;flex-wrap:wrap;gap:8px}
   .fam-actions .btn{flex:1;min-width:120px}
+  .fam-name-input{font-size:18px;font-weight:800;color:#16233a;width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;margin-bottom:8px;font-family:inherit}
+  .fam-name-input:hover{border-color:var(--line)}
+  .fam-name-input:focus{outline:none;border-color:var(--blue);background:var(--surface)}
   .grp{font-size:13px;font-weight:700;color:var(--blue);padding:14px 14px 2px}
   .pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:20px;background:var(--tag);color:var(--blue);margin-right:6px}
   .pill.series{background:#fff3e0;color:#c77b00}
@@ -326,7 +331,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <div class="fam-card" data-page-node-id="BTFDlt3KYmnXHVa6rYnVlK">
           <div id="familyAvatarWrap" data-page-node-id="AdeglFB3iILNTyqmU0ZIOx"></div>
           <div class="fam-meta" data-page-node-id="OdWoQt2nJZ8b6YqwIREt4F">
-            <div class="fam-name" id="familyInfo" data-page-node-id="u0SFhIhLSHRG9gErTf3xvQ"></div>
+            <input class="fam-name-input" id="familyInfo" placeholder="家庭名称" onchange="saveFamilyName()" data-page-node-id="u0SFhIhLSHRG9gErTf3xvQ" />
             <div class="fam-member-row" data-page-node-id="i1mHlHaE9fJ7buMnTztw42">
               <input id="cloudMember" placeholder="我的名字（如 爸爸）" data-page-node-id="bWjKIcr9sZW5etfQM5Q4Ln" />
               <button class="btn ghost sm" onclick="saveMember()" data-page-node-id="Vo1lawtoRBB8QfJjr13vQS">保存昵称</button>
@@ -840,8 +845,9 @@ function renderFamilyPanel(){
   if(document.getElementById('familyJoinBox')) document.getElementById('familyJoinBox').style.display = isJoined?'none':'block';
   if(document.getElementById('familyMemberBox')) document.getElementById('familyMemberBox').style.display = isJoined?'block':'none';
   if(document.getElementById('cloudMember')) document.getElementById('cloudMember').value=(f&&f.member)||'我';
-  if(document.getElementById('familyInfo')) document.getElementById('familyInfo').textContent = isJoined? (f.familyName||('家庭 '+f.familyId)) : '';
-  if(document.getElementById('familyAvatarWrap')) document.getElementById('familyAvatarWrap').innerHTML = avatarHtml(f&&f.avatar,'lg','家');
+  if(document.getElementById('familyInfo')) document.getElementById('familyInfo').value = isJoined? (f.familyName||'') : '';
+  const famInitial = (f&&f.familyName&&f.familyName.trim())? f.familyName.trim().charAt(0) : '';
+  if(document.getElementById('familyAvatarWrap')) document.getElementById('familyAvatarWrap').innerHTML = avatarHtml(f&&f.avatar,'lg', famInitial||'家');
   if(document.getElementById('familyAvatarClear')) document.getElementById('familyAvatarClear').style.display = (isJoined&&f&&f.avatar)?'inline':'none';
 }
 function onFamilyAvatarPick(e){
@@ -884,6 +890,13 @@ function saveMember(){
   const f=familyState(); if(!f)return;
   f.member=document.getElementById('cloudMember').value.trim()||'我'; setFamily(f);
   toast('已保存昵称');
+}
+function saveFamilyName(){
+  const f=familyState(); if(!f)return;
+  const v=document.getElementById('familyInfo').value.trim();
+  f.familyName=v; setFamily(f); renderFamilyPanel();
+  pushFamilyMeta();
+  if(v) toast('家庭名称已更新并同步'); else toast('已清除家庭名称');
 }
 function leaveFamily(){
   if(!confirm('退出家庭会保留本机数据，但不再与家庭云同步，确定？'))return;
