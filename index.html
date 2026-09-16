@@ -649,9 +649,36 @@ function aeCancel(){ const cb=ae.cb; aeClose(); if(cb) cb(null); }
 function aeBind(){
   const stage=document.getElementById('aeStage');
   if(stage.dataset.bound) return; stage.dataset.bound='1';
-  stage.addEventListener('pointerdown', e=>{ ae.dragging=true; ae.lx=e.clientX; ae.ly=e.clientY; stage.classList.add('dragging'); try{stage.setPointerCapture(e.pointerId)}catch(_){} });
-  stage.addEventListener('pointermove', e=>{ if(!ae.dragging)return; ae.panX+=e.clientX-ae.lx; ae.panY+=e.clientY-ae.ly; ae.lx=e.clientX; ae.ly=e.clientY; aeClamp(); aeRender(); });
-  const end=()=>{ ae.dragging=false; stage.classList.remove('dragging'); };
+  const pts=new Map();                 // pointerId -> {x,y}
+  let mode=null;                       // 'pan' | 'pinch'
+  let startDist=1, startScale=1, startMid={x:0,y:0}, startPanX=0, startPanY=0;
+  const distOf=()=>{ const p=[...pts.values()]; return Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y)||1; };
+  const midOf=()=>{ const p=[...pts.values()]; return {x:(p[0].x+p[1].x)/2, y:(p[0].y+p[1].y)/2}; };
+  stage.addEventListener('pointerdown', e=>{
+    try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    stage.classList.add('dragging');
+    if(pts.size===1){ mode='pan'; ae.lx=e.clientX; ae.ly=e.clientY; }
+    else if(pts.size===2){ mode='pinch'; startDist=distOf(); startScale=ae.scale; startMid=midOf(); startPanX=ae.panX; startPanY=ae.panY; }
+  });
+  stage.addEventListener('pointermove', e=>{
+    if(!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(mode==='pan' && pts.size===1){
+      ae.panX+=e.clientX-ae.lx; ae.panY+=e.clientY-ae.ly; ae.lx=e.clientX; ae.ly=e.clientY; aeClamp(); aeRender();
+    } else if(mode==='pinch' && pts.size>=2){
+      aeSetScale(startScale*distOf()/startDist);
+      const mid=midOf();
+      ae.panX=startPanX+(mid.x-startMid.x); ae.panY=startPanY+(mid.y-startMid.y);
+      aeClamp(); aeRender();
+    }
+  });
+  const end=e=>{
+    pts.delete(e.pointerId);
+    if(pts.size>=2){ mode='pinch'; startDist=distOf(); startScale=ae.scale; startMid=midOf(); startPanX=ae.panX; startPanY=ae.panY; }
+    else if(pts.size===1){ mode='pan'; const r=[...pts.values()][0]; ae.lx=r.x; ae.ly=r.y; }
+    else { mode=null; stage.classList.remove('dragging'); }
+  };
   stage.addEventListener('pointerup', end);
   stage.addEventListener('pointercancel', end);
   stage.addEventListener('wheel', e=>{ e.preventDefault(); aeSetScale(ae.scale*(1 - e.deltaY*0.0015)); }, {passive:false});
@@ -1722,7 +1749,7 @@ function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k))||[] }catch(e
         <button class="btn ghost sm" id="aeCancel" onclick="aeCancel()" data-page-node-id="jDyoi51gle88Ks2hqJqaLC">取消</button>
         <button class="btn primary" id="aeConfirm" onclick="aeConfirm()" data-page-node-id="T1pmcxByJzB9oESMaPQjxM">确定</button>
       </div>
-      <p class="ae-hint" data-page-node-id="wuxxxvDVIIZ8fM11hYuE6r">拖动图片调整位置，滑块或滚轮缩放，圆形区域即为最终头像。</p>
+      <p class="ae-hint" data-page-node-id="wuxxxvDVIIZ8fM11hYuE6r">单指拖动调整位置，双指捏合缩放，圆形区域即为最终头像。</p>
     </div>
   </div>
 </div>
