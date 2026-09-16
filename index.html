@@ -664,40 +664,40 @@ function aeCancel(){ const cb=ae.cb; aeClose(); if(cb) cb(null); }
 function aeBind(){
   const stage=document.getElementById('aeStage');
   if(stage.dataset.bound) return; stage.dataset.bound='1';
-  const pts=new Map();                 // pointerId -> {x,y}
-  let mode=null;                       // 'pan' | 'pinch'
-  let startDist=1, startScale=1, startMid={x:0,y:0}, startPanX=0, startPanY=0;
-  const distOf=()=>{ const p=[...pts.values()]; return Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y)||1; };
-  const midOf=()=>{ const p=[...pts.values()]; return {x:(p[0].x+p[1].x)/2, y:(p[0].y+p[1].y)/2}; };
-  const onMove=e=>{
-    if(!pts.has(e.pointerId)) return;
-    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(mode==='pan' && pts.size===1){
-      ae.panX+=e.clientX-ae.lx; ae.panY+=e.clientY-ae.ly; ae.lx=e.clientX; ae.ly=e.clientY; aeClamp(); aeRender();
-    } else if(mode==='pinch' && pts.size>=2){
-      aeSetScale(startScale*distOf()/startDist);
-      const mid=midOf();
+  // —— 触摸设备：原生 Touch 事件，移动端多指捏合/拖动最稳 ——
+  let mode=null, startDist=1, startScale=1, startMid={x:0,y:0}, startPanX=0, startPanY=0, last={x:0,y:0};
+  const tDist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY)||1;
+  const tMid=t=>({x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2});
+  stage.addEventListener('touchstart', e=>{
+    e.preventDefault(); stage.classList.add('dragging');
+    const t=e.touches;
+    if(t.length===1){ mode='pan'; last={x:t[0].clientX, y:t[0].clientY}; }
+    else if(t.length>=2){ mode='pinch'; startDist=tDist(t); startScale=ae.scale; startMid=tMid(t); startPanX=ae.panX; startPanY=ae.panY; }
+  }, {passive:false});
+  stage.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    const t=e.touches;
+    if(mode==='pan' && t.length===1){
+      ae.panX+=t[0].clientX-last.x; ae.panY+=t[0].clientY-last.y;
+      last={x:t[0].clientX, y:t[0].clientY}; aeClamp(); aeRender();
+    } else if(mode==='pinch' && t.length>=2){
+      aeSetScale(startScale*tDist(t)/startDist);
+      const mid=tMid(t);
       ae.panX=startPanX+(mid.x-startMid.x); ae.panY=startPanY+(mid.y-startMid.y);
       aeClamp(); aeRender();
     }
+  }, {passive:false});
+  const tEnd=e=>{
+    if(e.touches.length===0){ mode=null; stage.classList.remove('dragging'); }
+    else if(e.touches.length===1){ mode='pan'; last={x:e.touches[0].clientX, y:e.touches[0].clientY}; }
   };
-  const onUp=e=>{
-    pts.delete(e.pointerId);
-    if(pts.size>=2){ mode='pinch'; startDist=distOf(); startScale=ae.scale; startMid=midOf(); startPanX=ae.panX; startPanY=ae.panY; }
-    else if(pts.size===1){ mode='pan'; const r=[...pts.values()][0]; ae.lx=r.x; ae.ly=r.y; }
-    else { mode=null; stage.classList.remove('dragging'); }
-  };
-  stage.addEventListener('pointerdown', e=>{
-    e.preventDefault();
-    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    stage.classList.add('dragging');
-    if(pts.size===1){ mode='pan'; ae.lx=e.clientX; ae.ly=e.clientY; }
-    else if(pts.size===2){ mode='pinch'; startDist=distOf(); startScale=ae.scale; startMid=midOf(); startPanX=ae.panX; startPanY=ae.panY; }
-  });
-  // 用 window 监听 move/up，避免双指时 setPointerCapture 把第二指事件吞掉（移动端捏合更稳）
-  window.addEventListener('pointermove', onMove, {passive:false});
-  window.addEventListener('pointerup', onUp);
-  window.addEventListener('pointercancel', onUp);
+  stage.addEventListener('touchend', tEnd);
+  stage.addEventListener('touchcancel', tEnd);
+  // —— 桌面端：鼠标拖动 + 滚轮缩放 ——
+  let mdown=false, mlx=0, mly=0;
+  stage.addEventListener('mousedown', e=>{ mdown=true; mlx=e.clientX; mly=e.clientY; stage.classList.add('dragging'); });
+  window.addEventListener('mousemove', e=>{ if(!mdown)return; ae.panX+=e.clientX-mlx; ae.panY+=e.clientY-mly; mlx=e.clientX; mly=e.clientY; aeClamp(); aeRender(); });
+  window.addEventListener('mouseup', ()=>{ mdown=false; stage.classList.remove('dragging'); });
   stage.addEventListener('wheel', e=>{ e.preventDefault(); aeSetScale(ae.scale*(1 - e.deltaY*0.0015)); }, {passive:false});
   document.getElementById('aeZoom').addEventListener('input', e=>{ aeSetScale(ae.baseScale*(1 + e.target.value/100*7)); });
 }
