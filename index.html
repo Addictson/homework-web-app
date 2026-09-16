@@ -91,6 +91,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .fam-name-input{font-size:18px;font-weight:800;color:#16233a;width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;margin-bottom:8px;font-family:inherit}
   .fam-name-input:hover{border-color:var(--line)}
   .fam-name-input:focus{outline:none;border-color:var(--blue);background:var(--surface)}
+  .fam-line{margin-bottom:8px}
+  .fam-line-main{display:flex;align-items:center;gap:8px}
+  .fam-label{font-size:13px;color:var(--sub);white-space:nowrap}
+  .fam-val{font-size:18px;font-weight:800;color:var(--heading);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fam-edit-btn{flex:0 0 auto}
+  .fam-edit-wrap{display:flex;gap:8px;margin-top:6px}
+  .fam-edit-wrap input{flex:1;min-width:0}
+  .fam-edit-wrap .fam-name-input{width:auto;flex:1;margin-bottom:0}
   .field-hint{font-size:12px;color:var(--sub);margin-top:4px;line-height:1.35}
   .child-edit-fields{display:flex;gap:8px;margin-top:10px}
   .cef{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -345,14 +353,30 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             <div id="familyAvatarWrap"></div>
             <div class="fam-avatar-empty" id="familyAvatarHint">点击上传</div>
           </div>
-          <div class="fam-meta" data-page-node-id="OdWoQt2nJZ8b6YqwIREt4F">
-            <input class="fam-name-input" id="familyInfo" placeholder="家庭名称" onchange="saveFamilyName()" data-page-node-id="u0SFhIhLSHRG9gErTf3xvQ" />
-            <div class="fam-member-row" data-page-node-id="i1mHlHaE9fJ7buMnTztw42">
-              <input id="cloudMember" placeholder="我的名字（如 爸爸）" data-page-node-id="bWjKIcr9sZW5etfQM5Q4Ln" />
-              <button class="btn ghost sm" onclick="saveMember()" data-page-node-id="Vo1lawtoRBB8QfJjr13vQS">保存昵称</button>
+            <div class="fam-meta" data-page-node-id="OdWoQt2nJZ8b6YqwIREt4F">
+              <div class="fam-line">
+                <div class="fam-line-main">
+                  <span class="fam-label">家庭名称：</span>
+                  <span class="fam-val" id="familyNameText"></span>
+                  <button class="btn ghost sm fam-edit-btn" id="familyNameEditBtn" onclick="editFamilyName()">修改</button>
+                </div>
+                <div class="fam-edit-wrap" id="familyNameEdit" style="display:none">
+                  <input class="fam-name-input" id="familyInfo" placeholder="家庭名称" onchange="saveFamilyName()" data-page-node-id="u0SFhIhLSHRG9gErTf3xvQ" />
+                </div>
+              </div>
+              <div class="fam-line">
+                <div class="fam-line-main">
+                  <span class="fam-label">我的昵称：</span>
+                  <span class="fam-val" id="memberNameText"></span>
+                  <button class="btn ghost sm fam-edit-btn" id="memberEditBtn" onclick="editMemberName()">修改</button>
+                </div>
+                <div class="fam-edit-wrap" id="memberEdit" style="display:none">
+                  <input id="cloudMember" placeholder="我的名字（如 爸爸）" data-page-node-id="bWjKIcr9sZW5etfQM5Q4Ln" />
+                  <button class="btn primary sm" onclick="saveMember()">保存</button>
+                </div>
+              </div>
+              <input id="familyAvatarInput" type="file" accept="image/*" style="display:none" onchange="onFamilyAvatarPick(event)" data-page-node-id="u76A3w23mbqxjJtaYS6dBK" />
             </div>
-            <input id="familyAvatarInput" type="file" accept="image/*" style="display:none" onchange="onFamilyAvatarPick(event)" data-page-node-id="u76A3w23mbqxjJtaYS6dBK" />
-          </div>
         </div>
         <div class="fam-actions" data-page-node-id="GuixMShBmfiEG3O97VD45o">
           <button class="btn ghost sm" onclick="syncNow()" data-page-node-id="rP7oJ4cTeJMGKz4hwxQPeX">立即同步</button>
@@ -856,8 +880,25 @@ function renderFamilyPanel(){
   if(st) st.textContent = isJoined ? '已加入家庭（数据在家庭内加密同步）' : '未加入家庭（仅本机）';
   if(document.getElementById('familyJoinBox')) document.getElementById('familyJoinBox').style.display = isJoined?'none':'block';
   if(document.getElementById('familyMemberBox')) document.getElementById('familyMemberBox').style.display = isJoined?'block':'none';
-  if(document.getElementById('cloudMember')) document.getElementById('cloudMember').value=(f&&f.member)||'我';
-  if(document.getElementById('familyInfo')) document.getElementById('familyInfo').value = isJoined? (f.familyName||'') : '';
+  const fi2=document.getElementById('familyInfo');
+  const fnText=document.getElementById('familyNameText');
+  const fnWrap=document.getElementById('familyNameEdit');
+  const fnBtn=document.getElementById('familyNameEditBtn');
+  const hasName = !!(f&&f.familyName&&f.familyName.trim());
+  if(fi2) fi2.value = isJoined? (f.familyName||'') : '';
+  if(fnText){ fnText.textContent = hasName ? f.familyName : ''; fnText.style.display = hasName ? '' : 'none'; }
+  if(fnWrap) fnWrap.style.display = hasName ? 'none' : 'block';
+  if(fnBtn) fnBtn.style.display = hasName ? 'inline-block' : 'none';
+
+  const mc2=document.getElementById('cloudMember');
+  const mText=document.getElementById('memberNameText');
+  const mWrap=document.getElementById('memberEdit');
+  const mBtn=document.getElementById('memberEditBtn');
+  const hasNick = !!(f&&f.member&&f.member.trim()&&f.member.trim()!=='我');
+  if(mc2) mc2.value=(f&&f.member)||'我';
+  if(mText){ mText.textContent=(f&&f.member)||''; mText.style.display = hasNick ? '' : 'none'; }
+  if(mWrap) mWrap.style.display = hasNick ? 'none' : 'flex';
+  if(mBtn) mBtn.style.display = hasNick ? 'inline-block' : 'none';
   const famInitial = (f&&f.familyName&&f.familyName.trim())? f.familyName.trim().charAt(0) : '';
   const faw=document.getElementById('familyAvatarWrap');
   if(faw) faw.innerHTML = (isJoined&&f&&f.avatar)? avatarHtml(f.avatar,'lg', famInitial||'家') : '';
@@ -915,7 +956,26 @@ function joinFamily(){
 function saveMember(){
   const f=familyState(); if(!f)return;
   f.member=document.getElementById('cloudMember').value.trim()||'我'; setFamily(f);
+  renderFamilyPanel();
   toast('已保存昵称');
+}
+function editFamilyName(){
+  const w=document.getElementById('familyNameEdit');
+  const m=document.getElementById('familyNameEditBtn');
+  const t=document.getElementById('familyNameText');
+  if(w) w.style.display='block';
+  if(m) m.style.display='none';
+  if(t) t.style.display='none';
+  const fi=document.getElementById('familyInfo'); if(fi) fi.focus();
+}
+function editMemberName(){
+  const w=document.getElementById('memberEdit');
+  const m=document.getElementById('memberEditBtn');
+  const t=document.getElementById('memberNameText');
+  if(w) w.style.display='flex';
+  if(m) m.style.display='none';
+  if(t) t.style.display='none';
+  const mc=document.getElementById('cloudMember'); if(mc) mc.focus();
 }
 function saveFamilyName(){
   const f=familyState(); if(!f)return;
