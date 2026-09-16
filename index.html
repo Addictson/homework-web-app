@@ -90,6 +90,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .fam-actions .btn{flex:1;min-width:96px;min-height:52px;padding:11px 10px;font-size:14px;display:inline-flex;align-items:center;justify-content:center}
   button[onclick="dissolveFamily()"]{min-height:52px;padding:12px 10px;font-size:14px}
   button[onclick="clearAll()"]{min-height:50px;padding:12px 10px;font-size:14px}
+  .fam-members-sec{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .fam-sec-title{font-size:15px;font-weight:700;color:var(--heading);margin-bottom:8px}
+  .fam-sec-sub{font-size:12px;font-weight:400;color:var(--sub)}
+  .mem-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:10px}
+  .mem-row+.mem-row{border-top:1px solid var(--line)}
+  .mem-main{flex:1;min-width:0}
+  .mem-name{font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
+  .mem-me{font-size:11px;font-weight:700;color:#fff;background:var(--blue);border-radius:999px;padding:1px 8px;white-space:nowrap}
+  .mem-sub{font-size:12px;color:var(--sub);margin-top:2px}
   .fam-name-input{font-size:18px;font-weight:800;color:#16233a;width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;margin-bottom:8px;font-family:inherit}
   .fam-name-input:hover{border-color:var(--line)}
   .fam-name-input:focus{outline:none;border-color:var(--blue);background:var(--surface)}
@@ -380,6 +389,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
               <input id="familyAvatarInput" type="file" accept="image/*" style="display:none" onchange="onFamilyAvatarPick(event)" data-page-node-id="u76A3w23mbqxjJtaYS6dBK" />
             </div>
         </div>
+        <div class="fam-members-sec">
+          <div class="fam-sec-title">家庭成员 <span class="fam-sec-sub">（打开本页即登记，成员间互相可见）</span></div>
+          <div id="memberRoster"></div>
+        </div>
         <div class="fam-actions" data-page-node-id="GuixMShBmfiEG3O97VD45o">
           <button class="btn ghost sm" onclick="syncNow()" data-page-node-id="rP7oJ4cTeJMGKz4hwxQPeX">立即同步</button>
           <button class="btn ghost sm" onclick="leaveFamily()" data-page-node-id="aw3vUtVoACDcItpZM8N3C1">退出家庭</button>
@@ -581,7 +594,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
 <script>
 /* ============ 存储层 ============ */
-const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family';
+const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device';
 const APP_SALT = 'hw-fam-v1';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
@@ -757,6 +770,12 @@ function familyState(){ try{ return JSON.parse(localStorage.getItem(LS_FAMILY))|
 function joined(){ const f=familyState(); return !!(f&&f.familyId&&f.passphrase); }
 function setFamily(o){ localStorage.setItem(LS_FAMILY,JSON.stringify(o)); }
 function clearFamily(){ localStorage.removeItem(LS_FAMILY); _famKey=null; _famKeySig=null; }
+/* 每台设备一个稳定 ID（与家庭身份分开存，退出家庭后仍在），用于成员列表里标记"我是哪一行"、并作为成员行的唯一 kind */
+function deviceId(){
+  let d=localStorage.getItem(LS_DEVICE);
+  if(!d){ try{ d=(crypto.randomUUID?crypto.randomUUID():'d'+Date.now().toString(36)+Math.random().toString(36).slice(2)); }catch(e){ d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2); } localStorage.setItem(LS_DEVICE,d); }
+  return d;
+}
 
 /* —— 加密（Web Crypto：AES-GCM + PBKDF2） —— */
 function bufToB64(buf){ const b=new Uint8Array(buf); let s=''; for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]); return btoa(s); }
@@ -848,6 +867,61 @@ async function pullFamilyMeta(){
     }
   }catch(e){ console.error('pullFamilyMeta',e); if(e && /解密失败/.test(e.message||'')) throw e; }
 }
+/* —— 家庭成员列表（端到端加密，每人一条独立成员行，互不覆盖） —— */
+async function pushMember(){
+  if(!joined()) return;
+  const sb=getSupabase(); if(!sb) return;
+  try{
+    const f=familyState(); const key=await famKey();
+    const payload=await encBlob({ nick:(f&&f.member)||'我', joinedAt:Date.now(), lastSeen:Date.now() }, key);
+    await sb.from('family_data').upsert({ family_id:f.familyId, kind:'m_'+deviceId(), payload, updated_at:Date.now() }, {onConflict:'family_id,kind'});
+  }catch(e){ console.error('pushMember',e); }
+}
+async function pullMembers(){
+  if(!joined()) return [];
+  const sb=getSupabase(); if(!sb) return [];
+  try{
+    const f=familyState(); const key=await famKey();
+    const {data,error}=await sb.from('family_data').select('kind,payload,updated_at').eq('family_id',f.familyId).like('kind','m_%');
+    if(error) throw error;
+    if(!data||!data.length) return [];
+    const me='m_'+deviceId();
+    const out=[];
+    for(const row of data){
+      const obj=await decBlob(row.payload, key);
+      if(obj && obj.nick!==undefined) out.push({ id:row.kind, nick:obj.nick||'我', lastSeen:obj.lastSeen||row.updated_at||0, isMe:row.kind===me });
+    }
+    return out;
+  }catch(e){ console.error('pullMembers',e); if(e && /解密失败/.test(e.message||'')) throw e; return []; }
+}
+function relTime(ts){
+  if(!ts) return '未知';
+  const d=Date.now()-ts;
+  if(d<60000) return '刚刚';
+  if(d<3600000) return Math.floor(d/60000)+' 分钟前';
+  if(d<86400000) return Math.floor(d/3600000)+' 小时前';
+  if(d<86400000*7) return Math.floor(d/86400000)+' 天前';
+  try{ const dt=new Date(ts); return (dt.getMonth()+1)+'/'+dt.getDate(); }catch(e){ return '很久前'; }
+}
+async function renderMembers(){
+  const box=document.getElementById('memberRoster'); if(!box) return;
+  if(!joined()){ box.innerHTML=''; return; }
+  box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载成员…</div>';
+  try{
+    const list=await pullMembers();
+    if(!list.length){ box.innerHTML='<div class="hint" style="padding:10px 2px">暂无成员记录。成员需打开「家庭」页才会登记并显示在这里（仅同一家庭密码可见）。</div>'; return; }
+    list.sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0) || (b.lastSeen-a.lastSeen));
+    box.innerHTML=list.map(m=>{
+      const ph=(m.nick||'我').replace(/\s/g,'').slice(0,1)||'我';
+      return '<div class="mem-row">'+ avatarHtml('','sm', ph) +
+        '<div class="mem-main"><div class="mem-name">'+esc(m.nick||'我')+(m.isMe?' <span class="mem-me">本人</span>':'')+'</div>'+
+        '<div class="mem-sub">活跃：'+relTime(m.lastSeen)+'</div></div></div>';
+    }).join('');
+  }catch(e){
+    box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载成员失败：'+(e&&e.message||e)+'</div>';
+  }
+}
+
 async function syncNow(silent){
   if(!joined()){ if(!silent) toast('请先创建或加入家庭'); return; }
   const sb=getSupabase(); if(!sb){ if(!silent) toast('请先在「云服务配置」中填写 Supabase 地址与 Key 并保存'); return; }
@@ -863,7 +937,10 @@ async function syncNow(silent){
     const mc=mergeArrays(lc, rc), mh=mergeArrays(lh, rh);
     stateData.children=mc; try{localStorage.setItem(LS_C,JSON.stringify(mc))}catch(e){} await pushFamily('children',mc);
     stateData.homework=mh; try{localStorage.setItem(LS_H,JSON.stringify(mh))}catch(e){} await pushFamily('homework',mh);
-    render(); renderFamilyPanel(); if(!silent) toast('已与家庭云同步');
+    render(); renderFamilyPanel();
+    try{ await pushMember(); }catch(e){}  // 心跳：登记/更新本人在成员列表里的活跃时间
+    const fv=document.getElementById('familyView'); if(fv && fv.style.display!=='none'){ try{ await renderMembers(); }catch(e){} }
+    if(!silent) toast('已与家庭云同步');
   }catch(e){
     const msg=e&&e.message||'';
     if(silent){ console.warn('后台同步未完成（已用本机数据）:',msg); }
@@ -943,6 +1020,7 @@ async function createFamily(){
   toast('家庭已创建！正在生成「一键同步」链接…');
   await pushFamilyMeta();
   await syncNow();
+  await renderMembers();
   await shareFamily(); // 自动弹出含家庭密码的同步链接，发给家人点开即加入并同步
 }
 function joinFamily(){
@@ -954,11 +1032,12 @@ function joinFamily(){
   setFamily({familyId:code, familyName:'', passphrase:pass, member:(familyState()&&familyState().member)||'我'});
   renderFamilyPanel();
   syncNow();
+  renderMembers();
 }
 function saveMember(){
   const f=familyState(); if(!f)return;
   f.member=document.getElementById('cloudMember').value.trim()||'我'; setFamily(f);
-  renderFamilyPanel();
+  renderFamilyPanel(); pushMember();
   toast('已保存昵称');
 }
 function editFamilyName(){
@@ -986,9 +1065,15 @@ function saveFamilyName(){
   pushFamilyMeta();
   if(v) toast('家庭名称已更新并同步'); else toast('已清除家庭名称');
 }
-function leaveFamily(){
+async function leaveFamily(){
   if(!confirm('退出家庭会保留本机数据，但不再与家庭云同步，确定？'))return;
-  clearFamily(); renderFamilyPanel(); toast('已退出家庭（本机数据保留）');
+  const f=familyState();
+  if(f && f.familyId){
+    const sb=getSupabase();
+    try{ if(sb){ await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind','m_'+deviceId()); } }catch(e){ console.error('leaveFamily delete',e); }
+  }
+  clearFamily(); renderFamilyPanel(); const b=document.getElementById('memberRoster'); if(b) b.innerHTML='';
+  toast('已退出家庭（本机数据保留）');
 }
 async function dissolveFamily(){
   const f=familyState(); if(!f||!f.familyId){ toast('当前没有已加入的家庭'); return; }
@@ -1166,6 +1251,7 @@ function switchTab(t){
   document.getElementById('statsView').style.display = t==='stats'?'block':'none';
   document.getElementById('settingsView').style.display = t==='settings'?'block':'none';
   if(t==='settings') renderSettings(); else render();
+  if(t==='family') renderMembers();
   window.scrollTo(0,0);
 }
 function setFilter(s){
