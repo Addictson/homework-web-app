@@ -77,6 +77,18 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .parent-card .av-edit-tip{font-size:11px;color:var(--blue);margin-top:3px;text-align:center}
   .parent-card.editing .child-av .av-edit-tip{display:block}
   .parent-card .child-av .av-edit-tip{display:none}
+  /* 管理科目 / 身份选择弹窗 */
+  .mini-btn{margin-left:8px;padding:2px 10px;font-size:12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--blue);cursor:pointer;font-family:inherit}
+  .mini-btn:hover{background:var(--soft)}
+  .sub-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--surface)}
+  .sub-item .sub-name{font-weight:600}
+  .sub-item .sub-del{flex:none;padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--red);cursor:pointer;font-family:inherit;font-size:13px}
+  .sub-item .sub-del:hover{background:var(--soft)}
+  .id-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+  .id-opt{padding:11px 6px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-family:inherit;font-size:14px;text-align:center}
+  .id-opt:hover{background:var(--soft)}
+  .id-opt.selected{border-color:var(--blue);background:#eaf1ff;color:var(--blue);font-weight:700}
+  .c-lbl{font-size:12px;color:var(--sub);margin-bottom:4px;display:block}
   .c-in{flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;box-sizing:border-box}
   .avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.12);background:var(--soft);display:inline-block;vertical-align:middle;overflow:hidden;box-sizing:border-box;text-align:center;flex:none;min-width:48px;min-height:48px}
   .avatar.sm{width:34px;height:34px;min-width:34px;min-height:34px;font-size:14px}
@@ -483,7 +495,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <section class="grp">
         <div class="grp-h"><span class="dot"></span>基础信息</div>
         <div class="field"><label>孩子</label><select id="eChild"></select></div>
-        <div class="field"><label>科目</label><select id="eSubject"></select></div>
+        <div class="field"><label>科目 <button type="button" class="mini-btn" onclick="openSubjectModal()">管理</button></label><select id="eSubject"></select></div>
         <div class="field">
           <label>系列名<span class="opt">可选</span></label>
           <input id="eSeries" placeholder="复习手册（首次输入，之后可下拉选择）" list="seriesList" oninput="onSeriesInput()" onchange="onSeriesInput()" />
@@ -596,7 +608,22 @@ const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMI
 const APP_SALT = 'hw-fam-v1';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
-const SUBJECTS = ['语文','数学','英语','体育'];
+const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
+/* 科目可编辑：存于本机 localStorage，可删除、可自定义新增；提取作业文字时也用这份列表 */
+function getSubjects(){
+  try{ const a=JSON.parse(localStorage.getItem(LS_SUBJECTS)); if(Array.isArray(a)&&a.length) return a; }catch(e){}
+  return DEFAULT_SUBJECTS.slice();
+}
+function setSubjects(arr){
+  const a=(arr||[]).map(s=>String(s).trim()).filter(Boolean);
+  // 去重
+  const seen={}, uniq=[];
+  a.forEach(s=>{ if(!seen[s]){ seen[s]=1; uniq.push(s); } });
+  try{ localStorage.setItem(LS_SUBJECTS, JSON.stringify(uniq)); }catch(e){}
+  return uniq;
+}
+/* 家庭成员身份默认选项；同步/加入家庭时弹窗选择，也可选「自定义身份」 */
+const IDENTITIES = ['爸爸','妈妈','爷爷','奶奶','外公','外婆','哥哥','姐姐','弟弟','妹妹','学校老师','托管班老师','自定义身份'];
 let stateData = { children:[], homework:[] };
 function loadChildren(){ return stateData.children; }
 function stampUpdated(a){ (a||[]).forEach(x=>{ if(x&&x.id) x.updatedAt=Date.now(); }); return a; }
@@ -953,10 +980,16 @@ function renderParentCards(list){
     const active='<div class="child-grade">最近活跃：'+fmtActive(m.lastSeen)+'</div>';
     if(editingParentId===m.id && m.isMe){
       const dav=(parentDraft&&parentDraft.avatar)?avatarHtml(parentDraft.avatar,'lg',ph):avatarHtml('','lg',ph);
+      const curNick=(parentDraft&&parentDraft.nick)||'我';
+      const isCustom = IDENTITIES.indexOf(curNick)<0 && curNick!=='我';
+      const selOpts = IDENTITIES.map(o=>'<option value="'+o+'"'+(o===curNick?' selected':'')+'>'+o+'</option>').join('')
+         + '<option value="__custom__"'+(isCustom?' selected':'')+'>自定义身份</option>';
       return '<div class="card child-card parent-card editing">'
         +'<div class="child-av" onclick="pickParentAvatar()" title="点击更换头像">'+dav+'<div class="av-edit-tip">更换头像</div></div>'
         +'<div class="child-main" style="flex:1;min-width:0">'
-        +'<input class="c-in" value="'+esc(parentDraft?parentDraft.nick:'')+'" oninput="parentDraft.nick=this.value" placeholder="昵称（如 爸爸）">'
+        +'<label class="c-lbl">身份（其他成员可见）</label>'
+        +'<select class="c-in" id="parentIdentity" onchange="onParentIdentityChange(this)">'+selOpts+'</select>'
+        +'<input class="c-in" id="parentCustom" style="margin-top:6px;display:'+(isCustom?'block':'none')+'" placeholder="自定义身份" value="'+(isCustom?esc(curNick):'')+'" oninput="parentDraft.nick=this.value">'
         +'</div>'
         +'<div class="child-actions"><button class="btn primary sm" onclick="saveParentEdit()">保存</button><button class="btn ghost sm" onclick="cancelParentEdit()">取消</button></div>'
         +'</div>';
@@ -980,7 +1013,13 @@ function editParent(){
 function cancelParentEdit(){ editingParentId=null; parentDraft=null; renderParentCards(_parentList); }
 function saveParentEdit(){
   const f=familyState(); if(!f){ editingParentId=null; parentDraft=null; return; }
-  f.member=(parentDraft&&parentDraft.nick||'我').trim()||'我';
+  const sel=document.getElementById('parentIdentity');
+  let nick='我';
+  if(sel){
+    if(sel.value==='__custom__'){ const c=document.getElementById('parentCustom'); nick=(c?c.value:'').trim(); }
+    else nick=sel.value;
+  } else { nick=(parentDraft&&parentDraft.nick||'我').trim(); }
+  f.member=nick||'我';
   f.myAvatar=(parentDraft&&parentDraft.avatar)||'';
   setFamily(f);
   editingParentId=null; parentDraft=null;
@@ -1081,13 +1120,15 @@ async function createFamily(){
   if(!name){ toast('请填写家庭名称'); return; }
   if(!pass||pass.length<4){ toast('家庭密码至少 4 位'); return; }
   const code=genCode();
-  setFamily({familyId:code, familyName:name, passphrase:pass, member:(familyState()&&familyState().member)||'我'});
+  setFamily({familyId:code, familyName:name, passphrase:pass, member:'我'});
   renderFamilyPanel();
-  toast('家庭已创建！正在生成「一键同步」链接…');
-  await pushFamilyMeta();
-  await syncNow();
-  await renderMembers();
-  await shareFamily(); // 自动弹出含家庭密码的同步链接，发给家人点开即加入并同步
+  toast('家庭已创建！请选择你的身份…');
+  chooseIdentity(async ()=>{
+    await pushFamilyMeta();
+    await syncNow();
+    await renderMembers();
+    await shareFamily(); // 自动弹出含家庭密码的同步链接，发给家人点开即加入并同步
+  });
 }
 function joinFamily(){
   const raw=(document.getElementById('joinFamCode').value||'').trim();
@@ -1095,10 +1136,12 @@ function joinFamily(){
   if(raw.indexOf('|')>=0){ const parts=raw.split('|'); code=parts[0].trim().toUpperCase(); pass=parts.slice(1).join('|'); }
   else { code=raw.toUpperCase(); pass=document.getElementById('joinFamPass').value; }
   if(!code||!pass){ toast('请填写邀请码与家庭密码，或粘贴「家庭ID|密码」加入码'); return; }
-  setFamily({familyId:code, familyName:'', passphrase:pass, member:(familyState()&&familyState().member)||'我'});
+  setFamily({familyId:code, familyName:'', passphrase:pass, member:'我'});
   renderFamilyPanel();
-  syncNow();
-  renderMembers();
+  chooseIdentity(()=>{
+    syncNow();
+    renderMembers();
+  });
 }
 function saveMember(){
   const f=familyState(); if(!f)return;
@@ -1232,11 +1275,79 @@ async function joinFromLink(){
     await syncNow();
     return true;
   }
-  setFamily({familyId:payload.c, familyName:'', passphrase:payload.p, member:(familyState()&&familyState().member)||'我'});
+  setFamily({familyId:payload.c, familyName:'', passphrase:payload.p, member:'我'});
   renderFamilyPanel();
   toast('已通过分享链接加入家庭（邀请码 '+payload.c+'）');
-  await syncNow();
+  chooseIdentity(async ()=>{ await syncNow(); });
   return true;
+}
+
+/* ============ 管理科目（可删除、可自定义新增） ============ */
+function openSubjectModal(){
+  renderSubjectList();
+  const i=document.getElementById('newSubject'); if(i) i.value='';
+  const m=document.getElementById('subjectModal'); if(m) m.classList.add('show');
+}
+function closeSubjectModal(){ const m=document.getElementById('subjectModal'); if(m) m.classList.remove('show'); }
+function renderSubjectList(){
+  const box=document.getElementById('subjectList'); if(!box) return;
+  const arr=getSubjects();
+  if(!arr.length){ box.innerHTML='<div class="hint">暂无科目，请在下方新增。</div>'; return; }
+  box.innerHTML=arr.map(s=>'<div class="sub-item"><span class="sub-name">'+esc(s)+'</span><button class="sub-del" onclick="deleteSubject(\''+esc(s)+'\')">删除</button></div>').join('');
+}
+function addSubject(){
+  const i=document.getElementById('newSubject'); if(!i) return;
+  const v=i.value.trim(); if(!v){ toast('请输入科目名'); return; }
+  const arr=getSubjects();
+  if(arr.includes(v)){ toast('该科目已存在'); return; }
+  arr.push(v); setSubjects(arr);
+  i.value=''; renderSubjectList(); fillSubjectSelect();
+  toast('已新增科目：'+v);
+}
+function deleteSubject(name){
+  if(!confirm('删除科目「'+name+'」？\n已用该科目记录过的作业不受影响（仍会显示原科目名），只是以后添加作业时不再提供该选项。')) return;
+  const arr=getSubjects().filter(s=>s!==name);
+  setSubjects(arr); renderSubjectList(); fillSubjectSelect();
+  toast('已删除科目：'+name);
+}
+
+/* ============ 家庭成员身份选择（同步/加入家庭时弹窗） ============ */
+let _idDone=null;
+function chooseIdentity(cb){
+  const f=familyState(); if(!f){ if(cb) cb(); return; }
+  if(f.member && f.member!=='我'){ if(cb) cb(); return; } // 已设置过真实身份则跳过
+  const grid=document.getElementById('idGrid');
+  if(grid) grid.innerHTML=IDENTITIES.map(o=>'<button type="button" class="id-opt" data-opt="'+o+'" onclick="selectIdentity(\''+o+'\',this)">'+o+'</button>').join('');
+  const cw=document.getElementById('idCustomWrap'); if(cw) cw.style.display='none';
+  const ci=document.getElementById('idCustom'); if(ci) ci.value='';
+  _idDone=cb;
+  const m=document.getElementById('identityModal'); if(m) m.classList.add('show');
+}
+function selectIdentity(opt, btn){
+  document.querySelectorAll('#idGrid .id-opt').forEach(b=>b.classList.remove('selected'));
+  if(btn) btn.classList.add('selected');
+  const cw=document.getElementById('idCustomWrap');
+  if(opt==='自定义身份'){ if(cw) cw.style.display='block'; const ci=document.getElementById('idCustom'); if(ci) ci.focus(); }
+  else { if(cw) cw.style.display='none'; }
+}
+function confirmIdentity(){
+  const sel=document.querySelector('#idGrid .id-opt.selected');
+  let val = sel ? sel.getAttribute('data-opt') : '';
+  if(val==='自定义身份'){ const ci=document.getElementById('idCustom'); val=(ci?ci.value:'').trim(); }
+  if(!val){ toast('请选择身份，或在「自定义身份」里填写'); return; }
+  const f=familyState(); if(f){ f.member=val; setFamily(f); }
+  const m=document.getElementById('identityModal'); if(m) m.classList.remove('show');
+  const cb=_idDone; _idDone=null; if(cb) cb();
+}
+function closeIdentity(){
+  const m=document.getElementById('identityModal'); if(m) m.classList.remove('show');
+  const cb=_idDone; _idDone=null; if(cb) cb(); // 取消也继续（保持原 member）
+}
+function onParentIdentityChange(sel){
+  if(!parentDraft) parentDraft={};
+  const custom=document.getElementById('parentCustom');
+  if(sel.value==='__custom__'){ if(custom){ custom.style.display='block'; parentDraft.nick=custom.value; custom.focus(); } }
+  else { if(custom) custom.style.display='none'; parentDraft.nick=sel.value; }
 }
 /* 好友自建邀请：仅预填云服务配置，进入创建家庭流程（数据互不干扰） */
 async function setupFromLink(){
@@ -1266,7 +1377,7 @@ function extract(text){
   if((m=t.match(/(\d{4})[-年.](\d{1,2})[-月.](\d{1,2})/))) result.date=`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
   else if((m=t.match(/(\d{1,2})月(\d{1,2})[日号]/))) result.date=`${year}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
   else if((m=t.match(/(\d{1,2})[.\/](\d{1,2})/))) result.date=`${year}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
-  for(const s of SUBJECTS){ if(t.includes(s)){ result.subject=s; break } }
+  for(const s of getSubjects()){ if(t.includes(s)){ result.subject=s; break } }
   let sm;
   if((sm=t.match(/(?:第\s*)(\d+)\s*[-~到至]\s*(?:第\s*)(\d+)\s*页/))||(sm=t.match(/[Pp]\s*(\d+)\s*[-~到至]\s*(\d+)/))){
     result.pageFrom=sm[1].replace(/[^0-9]/g,''); result.pageTo=sm[2].replace(/[^0-9]/g,'');
@@ -1567,7 +1678,7 @@ function showNotification(title,body){
 /* ============ 编辑 ============ */
 function fillSubjectSelect(){
   const sel=document.getElementById('eSubject');
-  sel.innerHTML=SUBJECTS.map(s=>`<option value="${s}">${s}</option>`).join('');
+  sel.innerHTML=getSubjects().map(s=>`<option value="${s}">${s}</option>`).join('');
 }
 function fillChildSelect(selId,pick){
   const sel=document.getElementById(selId);
@@ -1693,7 +1804,7 @@ function pasteAndExtract(){
 function doExtract(){
   const t=document.getElementById('ePaste').value;
   const ex=extract(t);
-  if(ex.subject && SUBJECTS.includes(ex.subject)) document.getElementById('eSubject').value=ex.subject;
+  if(ex.subject && getSubjects().includes(ex.subject)) document.getElementById('eSubject').value=ex.subject;
   if(ex.date) document.getElementById('eDue').value=ex.date;
   if(ex.series) document.getElementById('eSeries').value=ex.series;
   onSeriesInput();
@@ -2006,6 +2117,38 @@ function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k))||[] }catch(e
         <button class="btn primary" style="flex:1" onclick="document.getElementById('familyAvatarInput').click()">上传修改头像</button>
         <button class="btn ghost" style="flex:1" onclick="clearFamilyAvatar();closeFamilyAvatarModal()">清除头像</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 管理科目（可删除、可自定义新增） -->
+<div class="modal" id="subjectModal" onclick="if(event.target===this)closeSubjectModal()">
+  <div class="sheet">
+    <div class="sheet-head"><span class="h-title">管理科目</span><button class="x" onclick="closeSubjectModal()">✕</button></div>
+    <div class="sheet-body">
+      <p class="hint">可删除不需要的科目，或新增自定义科目（新增后添加作业时即可在下拉中选择）。</p>
+      <div id="subjectList"></div>
+      <div class="field" style="margin-top:14px"><label>新增科目</label><input id="newSubject" placeholder="如 科学、道法" onkeydown="if(event.key==='Enter')addSubject()" /></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn ghost" onclick="closeSubjectModal()">完成</button>
+      <button class="btn primary" onclick="addSubject()">＋ 新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- 同步/加入家庭时选择身份 -->
+<div class="modal" id="identityModal" onclick="if(event.target===this)closeIdentity()">
+  <div class="sheet">
+    <div class="sheet-head"><span class="h-title">你在家庭的身份</span><button class="x" onclick="closeIdentity()">✕</button></div>
+    <div class="sheet-body">
+      <p class="hint">请选择你在这个家庭的身份，其他成员会在「家长」列表里看到。</p>
+      <div class="id-grid" id="idGrid"></div>
+      <div class="field" id="idCustomWrap" style="display:none;margin-top:12px"><label>自定义身份</label><input id="idCustom" placeholder="如 姑姑、叔叔" /></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn ghost" onclick="closeIdentity()">取消</button>
+      <button class="btn primary" onclick="confirmIdentity()">确定</button>
     </div>
   </div>
 </div>
