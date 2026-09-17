@@ -73,6 +73,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .child-grade{font-size:13px;color:var(--sub);margin-top:2px}
   .child-actions{display:flex;gap:6px;flex-shrink:0}
   .child-edit-card{display:flex;flex-direction:column}
+  .parent-card.editing .child-av{cursor:pointer;position:relative}
+  .parent-card .av-edit-tip{font-size:11px;color:var(--blue);margin-top:3px;text-align:center}
+  .parent-card.editing .child-av .av-edit-tip{display:block}
+  .parent-card .child-av .av-edit-tip{display:none}
   .c-in{flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;box-sizing:border-box}
   .avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.12);background:var(--soft);display:inline-block;vertical-align:middle;overflow:hidden;box-sizing:border-box;text-align:center;flex:none;min-width:48px;min-height:48px}
   .avatar.sm{width:34px;height:34px;min-width:34px;min-height:34px;font-size:14px}
@@ -341,8 +345,15 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     </div>
     <div id="childrenList" data-page-node-id="q1bEDe2J9DunxbFWcAknKD"></div>
     <input id="childAvatarInput" type="file" accept="image/*" style="display:none" onchange="onChildAvatarPick(event)">
+
+    <!-- 家长区块 -->
+    <div class="page-head" style="margin-top:22px"><h3 style="margin:0">👪 家长</h3></div>
+    <div class="mem-count" id="parentCount"></div>
+    <div id="parentRoster"></div>
+    <div id="parentHint" class="hint" style="padding:10px 2px;display:none">加入家庭并打开本页，你会自动登记为家长并显示在这里；其他成员打开本页后也会显示。成员间互相可见，数据端到端加密。</div>
+    <input id="parentAvatarInput" type="file" accept="image/*" style="display:none" onchange="onParentAvatarPick(event)" />
     <div class="sec">
-      <h4>👪 家庭</h4>
+      <h4>⚙️ 家庭设置</h4>
       <p id="familyStatus" class="hint" data-page-node-id="JW31P7Crl6GsimkturbHjD">未加入家庭（仅本机）</p>
 
             <div id="familyJoinBox" data-page-node-id="bDeSIp2jpuhZvFzVOY2FVW">
@@ -379,24 +390,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
                   <input class="fam-name-input" id="familyInfo" placeholder="家庭名称" onchange="saveFamilyName()" data-page-node-id="u0SFhIhLSHRG9gErTf3xvQ" />
                 </div>
               </div>
-              <div class="fam-line">
-                <div class="fam-line-main">
-                  <span class="fam-label">我的昵称：</span>
-                  <span class="fam-val" id="memberNameText"></span>
-                  <button class="btn ghost sm fam-edit-btn" id="memberEditBtn" onclick="editMemberName()">修改</button>
-                </div>
-                <div class="fam-edit-wrap" id="memberEdit" style="display:none">
-                  <input id="cloudMember" placeholder="我的名字（如 爸爸）" data-page-node-id="bWjKIcr9sZW5etfQM5Q4Ln" />
-                  <button class="btn primary sm" onclick="saveMember()">保存</button>
-                </div>
-              </div>
               <input id="familyAvatarInput" type="file" accept="image/*" style="display:none" onchange="onFamilyAvatarPick(event)" data-page-node-id="u76A3w23mbqxjJtaYS6dBK" />
             </div>
-        </div>
-        <div class="fam-members-sec">
-          <div class="fam-sec-title">家庭成员 <span class="fam-sec-sub">（打开本页即登记，成员间互相可见）</span></div>
-          <div class="mem-count" id="memberCount"></div>
-          <div id="memberRoster"></div>
         </div>
         <div class="fam-actions" data-page-node-id="GuixMShBmfiEG3O97VD45o">
           <button class="btn ghost sm" onclick="syncNow()" data-page-node-id="rP7oJ4cTeJMGKz4hwxQPeX">立即同步</button>
@@ -878,7 +873,7 @@ async function pushMember(){
   const sb=getSupabase(); if(!sb) return;
   try{
     const f=familyState(); const key=await famKey();
-    const payload=await encBlob({ nick:(f&&f.member)||'我', joinedAt:Date.now(), lastSeen:Date.now() }, key);
+    const payload=await encBlob({ nick:(f&&f.member)||'我', avatar:(f&&f.myAvatar)||'', joinedAt:Date.now(), lastSeen:Date.now() }, key);
     await sb.from('family_data').upsert({ family_id:f.familyId, kind:'m_'+deviceId(), payload, updated_at:Date.now() }, {onConflict:'family_id,kind'});
   }catch(e){ console.error('pushMember',e); }
 }
@@ -894,7 +889,7 @@ async function pullMembers(){
     const out=[];
     for(const row of data){
       const obj=await decBlob(row.payload, key);
-      if(obj && obj.nick!==undefined) out.push({ id:row.kind, nick:obj.nick||'我', lastSeen:obj.lastSeen||row.updated_at||0, isMe:row.kind===me });
+      if(obj && obj.nick!==undefined) out.push({ id:row.kind, nick:obj.nick||'我', avatar:obj.avatar||'', lastSeen:obj.lastSeen||row.updated_at||0, isMe:row.kind===me });
     }
     return out;
   }catch(e){ console.error('pullMembers',e); if(e && /解密失败/.test(e.message||'')) throw e; return []; }
@@ -934,42 +929,74 @@ function relTime(ts){
   if(d<86400000*7) return Math.floor(d/86400000)+' 天前';
   try{ const dt=new Date(ts); return (dt.getMonth()+1)+'/'+dt.getDate(); }catch(e){ return '很久前'; }
 }
+let _parentList=[];
+let editingParentId=null;
+let parentDraft=null;
 async function renderMembers(){
-  const box=document.getElementById('memberRoster'); if(!box) return;
-  const cnt=document.getElementById('memberCount');
-  const setCnt=n=>{ if(cnt) cnt.textContent = n>0 ? ('共 '+n+' 位成员') : ''; };
-  if(!joined()){ box.innerHTML=''; setCnt(0); return; }
-  box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载成员…</div>'; setCnt(0);
+  const box=document.getElementById('parentRoster'); if(!box) return;
+  if(!joined()){ box.innerHTML=''; return; }
+  if(editingParentId){ renderParentCards(_parentList); return; }
+  box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载家长…</div>';
   try{
-    const list=await pullMembers();
-    if(!list.length){ box.innerHTML='<div class="hint" style="padding:10px 2px">暂无成员记录。成员需打开「家庭」页才会登记并显示在这里（仅同一家庭密码可见）。</div>'; setCnt(0); return; }
-    list.sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0) || (b.lastSeen-a.lastSeen));
-    setCnt(list.length);
-    box.innerHTML=list.map(m=>{
-      const ph=(m.nick||'我').replace(/\s/g,'').slice(0,1)||'我';
-      const del=m.isMe?'':('<button class="mem-del" data-rid="'+esc(String(m.id))+'" onpointerdown="memHoldStart(event,this)" onpointerup="memHoldEnd(event,this)" onpointerleave="memHoldEnd(event,this)" onpointercancel="memHoldEnd(event,this)" oncontextmenu="return false">移除</button>');
-      return '<div class="mem-row">'+ avatarHtml('','sm', ph) +
-        '<div class="mem-main"><div class="mem-name">'+esc(m.nick||'我')+(m.isMe?' <span class="mem-me">本人</span>':'')+'</div>'+
-        '<div class="mem-sub">最近活跃：'+fmtActive(m.lastSeen)+'</div></div>'+del+'</div>';
-    }).join('');
+    _parentList=await pullMembers();
+    renderParentCards(_parentList);
   }catch(e){
-    box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载成员失败：'+(e&&e.message||e)+'</div>';
+    box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载家长失败：'+(e&&e.message||e)+'</div>';
   }
 }
-let _memHold=null;
-function memHoldStart(e, btn){
-  e.preventDefault();
-  const rid=btn.getAttribute('data-rid'); if(!rid) return;
-  btn.classList.add('holding');
-  if(_memHold) clearTimeout(_memHold);
-  _memHold=setTimeout(()=>{
-    _memHold=null;
-    btn.classList.remove('holding');
-    removeMember(rid);   // 长按到位 → 弹出确认框（二次确认）
-  }, 600);
+function renderParentCards(list){
+  const box=document.getElementById('parentRoster'); if(!box) return;
+  const cnt=document.getElementById('parentCount');
+  const setCnt=n=>{ if(cnt) cnt.textContent = n>0 ? ('共 '+n+' 位家长') : ''; };
+  if(!joined()){ box.innerHTML=''; setCnt(0); return; }
+  if(!list || !list.length){ box.innerHTML=''; setCnt(0); return; }
+  list.sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0) || (b.lastSeen-a.lastSeen));
+  setCnt(list.length);
+  box.innerHTML=list.map(m=>{
+    const ph=(m.nick||'我').replace(/\s/g,'').slice(0,1)||'我';
+    const av=m.avatar?avatarHtml(m.avatar,'lg',ph):avatarHtml('','lg',ph);
+    const active='<div class="child-grade">最近活跃：'+fmtActive(m.lastSeen)+'</div>';
+    if(editingParentId===m.id && m.isMe){
+      const dav=(parentDraft&&parentDraft.avatar)?avatarHtml(parentDraft.avatar,'lg',ph):avatarHtml('','lg',ph);
+      return '<div class="card child-card parent-card editing">'
+        +'<div class="child-av" onclick="pickParentAvatar()" title="点击更换头像">'+dav+'<div class="av-edit-tip">更换头像</div></div>'
+        +'<div class="child-main" style="flex:1;min-width:0">'
+        +'<input class="c-in" value="'+esc(parentDraft?parentDraft.nick:'')+'" oninput="parentDraft.nick=this.value" placeholder="昵称（如 爸爸）">'
+        +'</div>'
+        +'<div class="child-actions"><button class="btn primary sm" onclick="saveParentEdit()">保存</button><button class="btn ghost sm" onclick="cancelParentEdit()">取消</button></div>'
+        +'</div>';
+    }
+    const editBtn=m.isMe?'<button class="btn ghost sm" onclick="editParent()">编辑</button>':'';
+    return '<div class="card child-card parent-card">'
+      +'<div class="child-av">'+av+'</div>'
+      +'<div class="child-main"><div class="child-name">'+esc(m.nick||'我')+(m.isMe?' <span class="mem-me">本人</span>':'')+'</div>'+active+'</div>'
+      +'<div class="child-actions">'+editBtn+'</div>'
+      +'</div>';
+  }).join('');
 }
-function memHoldEnd(e, btn){
-  if(_memHold){ clearTimeout(_memHold); _memHold=null; btn.classList.remove('holding'); toast('请长按「移除」按钮以确认'); }
+function editParent(){
+  const me='m_'+deviceId();
+  editingParentId=me;
+  const cur=_parentList.find(x=>x.id===me);
+  parentDraft={ nick:(familyState()&&familyState().member)||'我', avatar:(cur&&cur.avatar)||(familyState()&&familyState().myAvatar)||'' };
+  renderParentCards(_parentList);
+}
+function cancelParentEdit(){ editingParentId=null; parentDraft=null; renderParentCards(_parentList); }
+function saveParentEdit(){
+  const f=familyState(); if(!f){ editingParentId=null; parentDraft=null; return; }
+  f.member=(parentDraft&&parentDraft.nick||'我').trim()||'我';
+  f.myAvatar=(parentDraft&&parentDraft.avatar)||'';
+  setFamily(f);
+  editingParentId=null; parentDraft=null;
+  renderParentCards(_parentList);
+  pushMember();
+  toast('已保存');
+}
+function pickParentAvatar(){ const el=document.getElementById('parentAvatarInput'); if(el) el.click(); }
+function onParentAvatarPick(e){
+  const file=e.target.files&&e.target.files[0]; if(!file)return;
+  openAvatarEditor(file, d=>{ if(!d)return; if(!parentDraft)parentDraft={}; parentDraft.avatar=d; renderParentCards(_parentList); });
+  e.target.value='';
 }
 
 async function syncNow(silent){
@@ -1009,6 +1036,8 @@ function renderFamilyPanel(){
   if(st) st.textContent = isJoined ? '已加入家庭（数据在家庭内加密同步）' : '未加入家庭（仅本机）';
   if(document.getElementById('familyJoinBox')) document.getElementById('familyJoinBox').style.display = isJoined?'none':'block';
   if(document.getElementById('familyMemberBox')) document.getElementById('familyMemberBox').style.display = isJoined?'block':'none';
+  if(document.getElementById('parentRoster')) document.getElementById('parentRoster').style.display = isJoined?'block':'none';
+  if(document.getElementById('parentHint')) document.getElementById('parentHint').style.display = isJoined?'none':'block';
   const fi2=document.getElementById('familyInfo');
   const fnText=document.getElementById('familyNameText');
   const fnWrap=document.getElementById('familyNameEdit');
@@ -1019,15 +1048,6 @@ function renderFamilyPanel(){
   if(fnWrap) fnWrap.style.display = hasName ? 'none' : 'block';
   if(fnBtn) fnBtn.style.display = hasName ? 'inline-block' : 'none';
 
-  const mc2=document.getElementById('cloudMember');
-  const mText=document.getElementById('memberNameText');
-  const mWrap=document.getElementById('memberEdit');
-  const mBtn=document.getElementById('memberEditBtn');
-  const hasNick = !!(f&&f.member&&f.member.trim()&&f.member.trim()!=='我');
-  if(mc2) mc2.value=(f&&f.member)||'我';
-  if(mText){ mText.textContent=(f&&f.member)||''; mText.style.display = hasNick ? '' : 'none'; }
-  if(mWrap) mWrap.style.display = hasNick ? 'none' : 'flex';
-  if(mBtn) mBtn.style.display = hasNick ? 'inline-block' : 'none';
   const famInitial = (f&&f.familyName&&f.familyName.trim())? f.familyName.trim().charAt(0) : '';
   const faw=document.getElementById('familyAvatarWrap');
   if(faw) faw.innerHTML = (isJoined&&f&&f.avatar)? avatarHtml(f.avatar,'lg', famInitial||'家') : '';
@@ -1086,9 +1106,8 @@ function joinFamily(){
 }
 function saveMember(){
   const f=familyState(); if(!f)return;
-  f.member=document.getElementById('cloudMember').value.trim()||'我'; setFamily(f);
   renderFamilyPanel(); pushMember();
-  toast('已保存昵称');
+  toast('已保存');
 }
 function editFamilyName(){
   const w=document.getElementById('familyNameEdit');
@@ -1099,15 +1118,7 @@ function editFamilyName(){
   if(t) t.style.display='none';
   const fi=document.getElementById('familyInfo'); if(fi) fi.focus();
 }
-function editMemberName(){
-  const w=document.getElementById('memberEdit');
-  const m=document.getElementById('memberEditBtn');
-  const t=document.getElementById('memberNameText');
-  if(w) w.style.display='flex';
-  if(m) m.style.display='none';
-  if(t) t.style.display='none';
-  const mc=document.getElementById('cloudMember'); if(mc) mc.focus();
-}
+function editMemberName(){ /* 昵称现已在家长卡片内联编辑，此函数保留以兼容旧引用 */ }
 function saveFamilyName(){
   const f=familyState(); if(!f)return;
   const v=document.getElementById('familyInfo').value.trim();
@@ -1122,7 +1133,7 @@ async function leaveFamily(){
     const sb=getSupabase();
     try{ if(sb){ await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind','m_'+deviceId()); } }catch(e){ console.error('leaveFamily delete',e); }
   }
-  clearFamily(); renderFamilyPanel(); const b=document.getElementById('memberRoster'); if(b) b.innerHTML='';
+  clearFamily(); renderFamilyPanel(); const b=document.getElementById('parentRoster'); if(b) b.innerHTML='';
   toast('已退出家庭（本机数据保留）');
 }
 async function dissolveFamily(){
@@ -1301,7 +1312,7 @@ function switchTab(t){
   document.getElementById('statsView').style.display = t==='stats'?'block':'none';
   document.getElementById('settingsView').style.display = t==='settings'?'block':'none';
   if(t==='settings') renderSettings(); else render();
-  if(t==='family') renderMembers();
+  if(t==='family'){ renderFamilyPanel(); renderMembers(); }
   window.scrollTo(0,0);
 }
 function setFilter(s){
