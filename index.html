@@ -397,6 +397,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
           <button class="btn ghost sm" onclick="syncNow()" data-page-node-id="rP7oJ4cTeJMGKz4hwxQPeX">立即同步</button>
           <button class="btn ghost sm" onclick="leaveFamily()" data-page-node-id="aw3vUtVoACDcItpZM8N3C1">退出家庭</button>
           <button class="btn primary sm" onclick="shareFamily()" data-page-node-id="UH6SXoygxEfUh7bI9PQLiz">🔗 分享家庭</button>
+          <button class="btn ghost sm" onclick="openChangePw()">🔑 修改密码</button>
         </div>
         <div style="margin-top:10px">
           <button class="btn danger" style="width:100%" onclick="dissolveFamily()" data-page-node-id="dJ8kXqLz9mN2pQr4vW6yT1">🗑️ 解散本家庭（删除云端全部数据）</button>
@@ -409,6 +410,22 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
           </div>
           <div id="linkBoxQr" style="margin-top:10px;text-align:center"></div>
           <div class="hint" id="linkBoxQrTip" style="margin-top:4px;text-align:center;display:none">家人用手机扫上方二维码，复制「家庭ID|密码」后，在作业网页点「加入家庭」粘贴即可同步</div>
+        </div>
+      </div>
+      <!-- 修改家庭密码（端到端加密：密码即密钥，需重加密全家数据并让家人重新加入） -->
+      <div class="modal" id="changePwModal" onclick="if(event.target===this)closeChangePw()">
+        <div class="sheet">
+          <div class="sheet-head"><span>修改家庭密码</span><button class="x" onclick="closeChangePw()">×</button></div>
+          <div class="sheet-body">
+            <p class="hint" style="color:var(--red)">⚠️ 修改密码会重加密全家所有数据（作业、孩子、家长资料）。改完后<b>所有家人必须用新的「分享家庭」链接重新加入</b>，否则他们将看不到数据（旧链接与旧密码会失效）。</p>
+            <div class="field"><label>当前密码</label><input id="cpCur" type="password" placeholder="确认是你本人" autocomplete="off" /></div>
+            <div class="field"><label>新密码（至少 4 位）</label><input id="cpNew" type="password" placeholder="至少 4 位" autocomplete="off" /></div>
+            <div class="field"><label>确认新密码</label><input id="cpNew2" type="password" placeholder="再输一次新密码" autocomplete="off" /></div>
+          </div>
+          <div class="sheet-foot">
+            <button class="btn ghost" onclick="closeChangePw()">取消</button>
+            <button class="btn danger" onclick="changeFamilyPassword()">确认修改</button>
+          </div>
         </div>
       </div>
       <p class="hint" data-page-node-id="XtEWcdSGszA3wck0Q56BEh">不同家庭的数据端到端加密、互不可见；同一家庭成员点击「分享家庭」链接即可加入，并在各设备/浏览器间自动同步。</p>
@@ -1181,6 +1198,67 @@ async function shareFamily(){
   const box=document.getElementById('linkBoxQr');
   const tip=document.getElementById('linkBoxQrTip');
   if(box){ try{ box.innerHTML=genQR(qrText); if(tip) tip.style.display='block'; }catch(e){ box.innerHTML='<div class="hint">二维码生成失败，请直接复制链接或家庭ID|密码</div>'; if(tip) tip.style.display='none'; } }
+}
+/* —— 修改家庭密码（端到端加密下：密码即密钥，需重加密全家数据） —— */
+function openChangePw(){ const m=document.getElementById('changePwModal'); if(m) m.classList.add('show'); }
+function closeChangePw(){
+  const m=document.getElementById('changePwModal'); if(m) m.classList.remove('show');
+  ['cpCur','cpNew','cpNew2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+}
+/* 用当前密钥（切换前=旧）拉取全部家长成员行明文（含其他家人），供改密码后重加密 */
+async function pullAllMembersPlaintext(){
+  if(!joined()) return [];
+  const sb=getSupabase(); if(!sb) return [];
+  try{
+    const f=familyState(); const key=await famKey();
+    const {data,error}=await sb.from('family_data').select('kind,payload').eq('family_id',f.familyId).like('kind','m_%');
+    if(error) throw error;
+    if(!data||!data.length) return [];
+    const out=[];
+    for(const row of data){ const obj=await decBlob(row.payload, key); if(obj) out.push({kind:row.kind, obj}); }
+    return out;
+  }catch(e){ console.error('pullAllMembersPlaintext',e); return []; }
+}
+/* 用当前密钥（切换后=新）加密并上传某条成员行 */
+async function pushMemberRow(kind, obj){
+  if(!joined()) return;
+  const sb=getSupabase(); if(!sb) return;
+  try{
+    const f=familyState(); const key=await famKey();
+    const payload=await encBlob(obj, key);
+    await sb.from('family_data').upsert({family_id:f.familyId, kind, payload, updated_at:Date.now()}, {onConflict:'family_id,kind'});
+  }catch(e){ console.error('pushMemberRow',e); }
+}
+async function changeFamilyPassword(){
+  const f=familyState(); if(!f||!f.familyId){ toast('请先创建或加入家庭'); return; }
+  const cur=(document.getElementById('cpCur').value||'');
+  const np=(document.getElementById('cpNew').value||'');
+  const np2=(document.getElementById('cpNew2').value||'');
+  if(cur!==f.passphrase){ toast('当前密码不正确'); return; }
+  if(!np||np.length<4){ toast('新密码至少 4 位'); return; }
+  if(np!==np2){ toast('两次输入的新密码不一致'); return; }
+  if(!confirm('⚠️ 确定修改家庭密码？\n\n修改后：\n1. 全家数据会用新密码重新加密；\n2. 所有家人必须用新的「分享家庭」链接重新加入（旧链接/旧密码失效）；\n3. 家人未重新加入前将看不到数据。')) return;
+  try{
+    // 1) 用旧密码先把云端最新数据拉到本地（含解密校验，失败则中止）
+    _quiet=true; try{ await syncNow(true); }catch(e){ throw e; } finally{ _quiet=false; }
+    // 2) 用旧密钥拉取全部家长成员行明文（含其他家人），必须在切换密码前完成
+    const members=await pullAllMembersPlaintext();
+    // 3) 切换本机密码为新密码（使 famKey 缓存失效、下次派生新密钥）
+    f.passphrase=np; setFamily(f); _famKey=null; _famKeySig=null;
+    // 4) 用新密钥重加密并上传全家数据（共享行 + 每位家长成员行）
+    await pushFamily('children', stateData.children||[]);
+    await pushFamily('homework', stateData.homework||[]);
+    await pushFamilyMeta();
+    for(const m of members){ await pushMemberRow(m.kind, m.obj); }
+    await pushMember(); // 更新自己成员行的活跃时间
+    toast('✅ 密码已修改，全家数据已用新密码重加密', 4000);
+    closeChangePw();
+    await shareFamily(); // 弹出含新密码的分享链接，发给家人重新加入
+  }catch(e){
+    const msg=e&&e.message||'';
+    if(/解密失败/.test(msg)){ toast('同步中止：家庭密码不一致，未修改密码。请用创建者最新分享链接重新加入。', 6000); }
+    else { toast('修改密码失败：'+msg); }
+  }
 }
 /* 统一的醒目链接展示区：同一时刻只显示一种链接，避免两个框同时出现、提示不清 */
 function showLinkBox(title, link){
