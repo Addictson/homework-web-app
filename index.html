@@ -604,8 +604,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
 <script>
 /* ============ 存储层 ============ */
-const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device';
+const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects';
 const APP_SALT = 'hw-fam-v1';
+const APP_VERSION = '20260918.1';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1289,25 +1290,27 @@ function openSubjectModal(){
   const m=document.getElementById('subjectModal'); if(m) m.classList.add('show');
 }
 function closeSubjectModal(){ const m=document.getElementById('subjectModal'); if(m) m.classList.remove('show'); fillSubjectSelect(); }
-function renderSubjectList(){
+function renderSubjectList(arr){
   const box=document.getElementById('subjectList'); if(!box) return;
-  const arr=getSubjects();
-  if(!arr.length){ box.innerHTML='<div class="hint">暂无科目，请在下方新增。</div>'; return; }
-  box.innerHTML=arr.map(s=>'<div class="sub-item"><span class="sub-name">'+esc(s)+'</span><button class="sub-del" onclick="deleteSubject(\''+esc(s)+'\')">删除</button></div>').join('');
+  const list=Array.isArray(arr)?arr:getSubjects();
+  if(!list.length){ box.innerHTML='<div class="hint">暂无科目，请在下方新增。</div>'; return; }
+  box.innerHTML=list.map(s=>'<div class="sub-item"><span class="sub-name">'+esc(s)+'</span><button class="sub-del" onclick="deleteSubject(\''+esc(s)+'\')">删除</button></div>').join('');
 }
 function addSubject(){
   const i=document.getElementById('newSubject'); if(!i) return;
   const v=i.value.trim(); if(!v){ toast('请输入科目名'); return; }
   const arr=getSubjects();
   if(arr.includes(v)){ toast('该科目已存在'); return; }
-  arr.push(v); setSubjects(arr);
-  i.value=''; renderSubjectList(); fillSubjectSelect();
+  arr.push(v);
+  const saved=setSubjects(arr);
+  i.value=''; renderSubjectList(saved); fillSubjectSelect(saved);
   toast('已新增科目：'+v);
 }
 function deleteSubject(name){
   if(!confirm('删除科目「'+name+'」？\n已用该科目记录过的作业不受影响（仍会显示原科目名），只是以后添加作业时不再提供该选项。')) return;
   const arr=getSubjects().filter(s=>s!==name);
-  setSubjects(arr); renderSubjectList(); fillSubjectSelect();
+  const saved=setSubjects(arr);
+  renderSubjectList(saved); fillSubjectSelect(saved);
   toast('已删除科目：'+name);
 }
 
@@ -1676,12 +1679,13 @@ function showNotification(title,body){
 
 
 /* ============ 编辑 ============ */
-function fillSubjectSelect(){
+function fillSubjectSelect(list){
   const sel=document.getElementById('eSubject'); if(!sel) return;
   const cur=sel.value;            // 记住当前选中，重建后尽量还原
+  const arr=Array.isArray(list)?list:getSubjects();
   sel.innerHTML='';
   // 用 Option 构造器逐个添加，比 innerHTML 更稳（根治 iOS Safari 下拉不刷新）
-  getSubjects().forEach(s=>{ sel.appendChild(new Option(s, s)); });
+  arr.forEach(s=>{ sel.appendChild(new Option(s, s)); });
   if([].some.call(sel.options, o=>o.value===cur)) sel.value=cur;
 }
 function fillChildSelect(selId,pick){
@@ -2059,6 +2063,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catc
 /* 首屏：只用本机缓存立即渲染，绝不等待网络；云端同步放到后台 */
 /* 已移除"关页面推送"：回到原版——打开即用本机缓存即时显示，页面/App 打开时才弹提醒；书签与桌面应用指向同一链接，数据同源同步 */
 async function bootstrap(){
+  console.log('homework-web v'+APP_VERSION);
   stateData.children=loadLS(LS_C);
   stateData.homework=loadLS(LS_H);
   fillChildFilter(stateData.homework);
