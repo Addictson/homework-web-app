@@ -103,7 +103,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .avatar-pick .clr{font-size:12px;color:var(--red);cursor:pointer}
   .fam-card{display:flex;align-items:center;gap:14px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
   .fam-card .fam-meta{flex:1;min-width:0}
-  .fam-name{font-size:18px;font-weight:800;color:#16233a;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fam-name{font-size:18px;font-weight:800;color:var(--heading);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fam-member-row{display:flex;gap:8px;margin-bottom:8px}
   .fam-member-row input{flex:1;min-width:0}
   .fam-upload{font-size:12px}
@@ -123,7 +123,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .mem-del{flex:none;min-width:auto;padding:6px 12px;font-size:13px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--red);cursor:pointer;font-family:inherit;-webkit-touch-callout:none;user-select:none;touch-action:manipulation}
   .mem-del:hover{background:var(--soft)}
   .mem-del.holding{border-color:var(--red);background:var(--soft)}
-  .fam-name-input{font-size:18px;font-weight:800;color:#16233a;width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;margin-bottom:8px;font-family:inherit}
+  .fam-name-input{font-size:18px;font-weight:800;color:var(--heading);width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;margin-bottom:8px;font-family:inherit}
   .fam-name-input:hover{border-color:var(--line)}
   .fam-name-input:focus{outline:none;border-color:var(--blue);background:var(--surface)}
   .fam-line{margin-bottom:8px}
@@ -144,8 +144,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .fam-avatar-empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--soft);border:2px dashed var(--blue);border-radius:50%;font-size:12px;color:var(--blue);text-align:center;padding:4px;box-sizing:border-box}
   .grp{font-size:13px;font-weight:700;color:var(--blue);padding:14px 14px 2px}
   .pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:20px;background:var(--tag);color:var(--blue);margin-right:6px}
-  .pill.series{background:#fff3e0;color:#c77b00}
-  .pill.over{background:#fdecea;color:var(--red)}
+  .pill.series{background:var(--soft);color:var(--orange)}
+  .pill.over{background:var(--soft);color:var(--red)}
   .fld{margin:6px 0 10px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--card2)}
   .fld>summary{cursor:pointer;font-size:13px;color:var(--blue);font-weight:600}
   .fbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;background:var(--card2)}
@@ -182,8 +182,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .img-close{position:absolute;top:-46px;right:0;background:var(--surface);color:#e23b3b;border:2px solid #e23b3b;border-radius:24px;padding:8px 18px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.35)}
   .sheet{background:var(--surface);width:100%;max-width:680px;max-height:calc(100vh - 40px);overflow-y:auto;overflow-x:hidden;border-radius:16px;padding:8px 18px 22px;box-shadow:0 12px 44px rgba(0,0,0,.28)}
   .sheet h3{margin:0 0 14px;font-size:18px}
-  .sheet .close{position:sticky;top:0;z-index:6;display:block;text-align:right;font-size:27px;font-weight:800;color:#999;cursor:pointer;line-height:1;background:linear-gradient(var(--surface) 70%,transparent);padding:6px 0 12px;margin:-8px -18px 0}
-  .cm-title{font-size:17px;font-weight:700;margin-bottom:2px}
+  .sheet .close{position:sticky;top:0;z-index:6;display:block;text-align:right;font-size:27px;font-weight:800;color:var(--sub);cursor:pointer;line-height:1;background:linear-gradient(var(--surface) 70%,transparent);padding:6px 0 12px;margin:-8px -18px 0}
+  .cm-title{font-size:17px;font-weight:700;margin-bottom:2px;color:var(--ink)}
   .cm-msg{font-size:15px;color:var(--ink);margin:12px 2px 18px;line-height:1.6}
   .cm-actions{display:flex;gap:10px}
   .cm-actions .btn{flex:1}
@@ -221,18 +221,18 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   /* ===== 头像编辑器 ===== */
   .avatar-editor{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:16px}
   .avatar-editor.show{display:flex}
-  .ae-box{background:#fff;border-radius:16px;padding:18px;width:min(360px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35);max-height:92vh;overflow:auto}
-  .ae-title{font-size:16px;font-weight:800;color:#16233a;text-align:center;margin-bottom:12px}
+  .ae-box{background:var(--surface);border-radius:16px;padding:18px;width:min(360px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35);max-height:92vh;overflow:auto}
+  .ae-title{font-size:16px;font-weight:800;color:var(--heading);text-align:center;margin-bottom:12px}
   .ae-stage{position:relative;width:min(280px,78vw);aspect-ratio:1;margin:0 auto;background:#1c1c1e;border-radius:12px;overflow:hidden;touch-action:none;cursor:grab;user-select:none}
   .ae-stage.dragging{cursor:grabbing}
   .ae-stage canvas{display:block;width:100%;height:100%}
   .ae-ring{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.92);box-shadow:0 0 0 9999px rgba(0,0,0,.5);pointer-events:none;box-sizing:border-box}
   .ae-controls{margin-top:14px}
-  .ae-zoom{display:flex;align-items:center;gap:10px;font-size:12px;color:#7c8aa0}
+  .ae-zoom{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--sub)}
   .ae-zoom input[type=range]{flex:1;accent-color:#3b82f6}
   .ae-row{display:flex;gap:8px;margin-top:12px}
   .ae-row .btn{flex:1}
-  .ae-hint{font-size:12px;color:#9aa4b2;text-align:center;margin-top:10px;line-height:1.5}
+  .ae-hint{font-size:12px;color:var(--sub);text-align:center;margin-top:10px;line-height:1.5}
   /* ===== 底部导航栏（手机优先，桌面居中） ===== */
   .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;background:var(--surface);border-top:1px solid var(--line);
        max-width:680px;margin:0 auto;padding:6px 0 calc(6px + env(safe-area-inset-bottom));box-shadow:0 -2px 10px rgba(0,0,0,.04)}
@@ -274,7 +274,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
 
   /* ===== 添加作业弹窗重设计（分区卡片 + 智能提取 + 固定底栏） ===== */
-  .sheet{background:#fff;width:100%;max-width:680px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;border-radius:16px;box-shadow:0 12px 44px rgba(0,0,0,.28);overflow:hidden}
+  .sheet{background:var(--surface);width:100%;max-width:680px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;border-radius:16px;box-shadow:0 12px 44px rgba(0,0,0,.28);overflow:hidden}
   .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:15px 16px 12px;background:var(--surface);flex:none;border-bottom:1px solid var(--line)}
   .h-title{font-size:18px;font-weight:800;letter-spacing:.5px}
   .x{width:34px;height:34px;border-radius:50%;border:0;background:var(--surface2);color:var(--sub);font-size:18px;line-height:1;cursor:pointer;flex:none}
@@ -294,7 +294,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .thumbs{display:flex;gap:8px;flex-wrap:wrap}
   .thumbs img{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}
   .pages{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
-  .pages-h{font-size:13px;font-weight:700;color:#7a6a2f;margin-bottom:2px}
+  .pages-h{font-size:13px;font-weight:700;color:var(--orange);margin-bottom:2px}
   .paste-box{margin-top:8px}
 
 </style>
@@ -416,8 +416,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <div style="margin-top:10px">
           <button class="btn danger" style="width:100%" onclick="dissolveFamily()" data-page-node-id="dJ8kXqLz9mN2pQr4vW6yT1">🗑️ 解散本家庭（删除云端全部数据）</button>
         </div>
-        <div id="linkBox" style="display:none;margin-top:12px;padding:12px 14px;background:#f0f5ff;border:1px solid #c7d8f5;border-radius:12px;box-shadow:0 2px 8px rgba(24,72,153,.08)" data-page-node-id="GrHbHYXpDDb798PRubByXW">
-          <div id="linkBoxTitle" style="font-weight:700;color:#184899;margin-bottom:8px;font-size:14px" data-page-node-id="1CP6NKKF8eAxmLzk5RlVyl"></div>
+        <div id="linkBox" style="display:none;margin-top:12px;padding:12px 14px;background:var(--soft);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.12)" data-page-node-id="GrHbHYXpDDb798PRubByXW">
+          <div id="linkBoxTitle" style="font-weight:700;color:var(--blue);margin-bottom:8px;font-size:14px" data-page-node-id="1CP6NKKF8eAxmLzk5RlVyl"></div>
           <div class="row" style="gap:6px" data-page-node-id="oeWavxh7PBeSNiyngjaZNh">
             <input id="linkBoxInput" readonly style="flex:1;min-width:0;font-size:12px" data-page-node-id="QxL0HJwsfQGn3DIhdgjdvb" />
             <button class="btn primary sm" onclick="copyLinkBox()" data-page-node-id="zPuSwuW4QIsnqDAXP5ixTO">复制</button>
@@ -615,7 +615,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260918.6';
+const APP_VERSION = '20260918.7';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1732,8 +1732,8 @@ function renderToday(){
        <span class="pill">⏳ 今日待完成 ${todoToday.length}</span>
        <span class="pill over">逾期 ${overdue.length}</span>
        <span class="pill">🔄 进行中 ${doing.length}</span>
-       <span class="pill" style="background:#e6f7ef;color:var(--green)">✅ 已完成 ${dn}</span>
-       <span class="pill" style="background:#fff4e5;color:#c77b00">📝 未完成 ${total-dn}</span>
+       <span class="pill" style="background:var(--soft);color:var(--green)">✅ 已完成 ${dn}</span>
+       <span class="pill" style="background:var(--soft);color:var(--orange)">📝 未完成 ${total-dn}</span>
      </div>
      <div class="bar"><i style="width:${rate}%"></i></div>
      <div class="hint">今日相关作业 ${total} 条 · 完成率 ${rate}%${total?'':'（暂无今日截止/逾期作业）'}</div>`;
