@@ -1288,7 +1288,7 @@ function openSubjectModal(){
   const i=document.getElementById('newSubject'); if(i) i.value='';
   const m=document.getElementById('subjectModal'); if(m) m.classList.add('show');
 }
-function closeSubjectModal(){ const m=document.getElementById('subjectModal'); if(m) m.classList.remove('show'); }
+function closeSubjectModal(){ const m=document.getElementById('subjectModal'); if(m) m.classList.remove('show'); fillSubjectSelect(); }
 function renderSubjectList(){
   const box=document.getElementById('subjectList'); if(!box) return;
   const arr=getSubjects();
@@ -1677,8 +1677,12 @@ function showNotification(title,body){
 
 /* ============ 编辑 ============ */
 function fillSubjectSelect(){
-  const sel=document.getElementById('eSubject');
-  sel.innerHTML=getSubjects().map(s=>`<option value="${s}">${s}</option>`).join('');
+  const sel=document.getElementById('eSubject'); if(!sel) return;
+  const cur=sel.value;            // 记住当前选中，重建后尽量还原
+  sel.innerHTML='';
+  // 用 Option 构造器逐个添加，比 innerHTML 更稳（根治 iOS Safari 下拉不刷新）
+  getSubjects().forEach(s=>{ sel.appendChild(new Option(s, s)); });
+  if([].some.call(sel.options, o=>o.value===cur)) sel.value=cur;
 }
 function fillChildSelect(selId,pick){
   const sel=document.getElementById(selId);
