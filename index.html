@@ -57,6 +57,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .field>label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
   .row{display:flex;gap:10px}
   .row>*{flex:1}
+  .md-row{display:flex;align-items:center;gap:4px}
+  .md-sel{flex:0 0 auto;width:auto;min-width:62px;padding:9px 6px;font-size:15px}
+  .md-u{color:var(--sub);font-size:13px;flex:none}
   .card{background:var(--card);border-radius:12px;padding:14px;margin:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
   .card.done{opacity:.62}
   .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
@@ -533,8 +536,12 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <section class="grp">
         <div class="grp-h"><span class="dot" style="background:var(--orange)"></span>时间与进度</div>
         <div class="row">
-          <div class="field"><label>布置日</label><input id="eAssign" type="date" /></div>
-          <div class="field"><label>截止日</label><input id="eDue" type="date" /></div>
+          <div class="field"><label>布置日</label>
+            <div class="md-row"><select id="eAssignM" class="md-sel"></select><span class="md-u">月</span><select id="eAssignD" class="md-sel"></select><span class="md-u">日</span></div>
+          </div>
+          <div class="field"><label>截止日</label>
+            <div class="md-row"><select id="eDueM" class="md-sel"></select><span class="md-u">月</span><select id="eDueD" class="md-sel"></select><span class="md-u">日</span></div>
+          </div>
         </div>
         <div class="pages" id="pageFields">
           <div class="pages-h">📑 分页作业（仅填了系列名才需要）</div>
@@ -606,7 +613,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260918.3';
+const APP_VERSION = '20260918.4';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1421,6 +1428,34 @@ async function setupFromLink(){
   return true;
 }
 function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0') }
+/* 月/日 紧凑选择器：只显示 月、日，年份自动推断（布置日=当年；截止日早于今天则视为明年，适配跨年截止） */
+function fillMDOptions(){
+  ['eAssign','eDue'].forEach(p=>{
+    const m=document.getElementById(p+'M'), d=document.getElementById(p+'D');
+    if(!m||!d||m.options.length) return;
+    for(let i=1;i<=12;i++) m.appendChild(new Option(i+'月', i));
+    for(let i=1;i<=31;i++) d.appendChild(new Option(i+'日', i));
+  });
+}
+function setMDSelects(prefix, ymd){
+  const m=document.getElementById(prefix+'M'), d=document.getElementById(prefix+'D');
+  if(!m||!d) return;
+  if(ymd && /^\d{4}-\d{2}-\d{2}$/.test(ymd)){ m.value=String(parseInt(ymd.slice(5,7),10)); d.value=String(parseInt(ymd.slice(8,10),10)); }
+  else { const n=new Date(); m.value=String(n.getMonth()+1); d.value=String(n.getDate()); }
+}
+function resolveYear(mm,dd,mode){
+  const n=new Date(), cy=n.getFullYear(), cm=n.getMonth()+1, cd=n.getDate();
+  if(mode==='due'){ if(mm<cm || (mm===cm && dd<cd)) return cy+1; return cy; }
+  return cy; // 布置日一般取当年
+}
+function getMDValue(prefix, mode){
+  const m=document.getElementById(prefix+'M'), d=document.getElementById(prefix+'D');
+  if(!m||!d) return '';
+  const mm=parseInt(m.value,10), dd=parseInt(d.value,10);
+  if(!mm||!dd) return '';
+  const y=resolveYear(mm,dd,mode);
+  return y+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+}
 function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
 
 /* ============ 粘贴识别（复用小程序 extract 逻辑） ============ */
@@ -1770,8 +1805,8 @@ function openEdit(id){
     document.getElementById('eChild').value=h.childId;
     document.getElementById('eSubject').value=h.subject||'其他';
     document.getElementById('eContent').value=h.content||'';
-    document.getElementById('eAssign').value=h.assignDate||'';
-    document.getElementById('eDue').value=h.dueDate||'';
+    setMDSelects('eAssign', h.assignDate||'');
+    setMDSelects('eDue', h.dueDate||'');
     document.getElementById('eSeries').value=h.series||'';
     document.getElementById('ePageFrom').value=h.pageFrom||'';
     document.getElementById('ePageTo').value=h.pageTo||'';
@@ -1781,9 +1816,9 @@ function openEdit(id){
   } else {
     document.getElementById('editTitle').textContent='新增作业';
     document.getElementById('eDelete').style.display='none';
-    ['eContent','eAssign','eDue','eSeries','ePageFrom','ePageTo','eNote'].forEach(i=>document.getElementById(i).value='');
-    document.getElementById('eAssign').value=today();
-    document.getElementById('eDue').value=today();
+    ['eContent','eSeries','ePageFrom','ePageTo','eNote'].forEach(i=>document.getElementById(i).value='');
+    setMDSelects('eAssign', today());
+    setMDSelects('eDue', today());
     document.getElementById('eStatus').value='todo';
   }
   refreshSeriesList();
@@ -1865,7 +1900,7 @@ function doExtract(){
   const t=document.getElementById('ePaste').value;
   const ex=extract(t);
   if(ex.subject && getSubjects().includes(ex.subject)) document.getElementById('eSubject').value=ex.subject;
-  if(ex.date) document.getElementById('eDue').value=ex.date;
+  if(ex.date) setMDSelects('eDue', ex.date);
   if(ex.series) document.getElementById('eSeries').value=ex.series;
   onSeriesInput();
   if(ex.pageFrom) document.getElementById('ePageFrom').value=ex.pageFrom;
@@ -1883,8 +1918,8 @@ function saveEdit(){
     childId, childName:child?child.name:'',
     subject:document.getElementById('eSubject').value,
     content:document.getElementById('eContent').value.trim(),
-    assignDate:document.getElementById('eAssign').value,
-    dueDate:document.getElementById('eDue').value,
+    assignDate:getMDValue('eAssign','assign'),
+    dueDate:getMDValue('eDue','due'),
     series:document.getElementById('eSeries').value.trim(),
     pageFrom:document.getElementById('ePageFrom').value,
     pageTo:document.getElementById('ePageTo').value,
@@ -2118,6 +2153,7 @@ async function bootstrap(){
   console.log('homework-web v'+APP_VERSION);
   stateData.children=loadLS(LS_C);
   stateData.homework=loadLS(LS_H);
+  fillMDOptions();
   fillChildFilter(stateData.homework);
   render();
   aeBind();
