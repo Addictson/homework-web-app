@@ -357,10 +357,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <div id="childrenList" data-page-node-id="q1bEDe2J9DunxbFWcAknKD"></div>
     <input id="childAvatarInput" type="file" accept="image/*" style="display:none" onchange="onChildAvatarPick(event)">
 
-    <!-- 家长区块 -->
-    <div class="page-head" style="margin-top:22px"><h3 style="margin:0">👪 家长</h3></div>
+    <!-- 家庭成员区块 -->
+    <div class="page-head" style="margin-top:22px"><h3 style="margin:0">👪 家庭成员</h3></div>
     <div id="parentRoster"></div>
-    <div id="parentHint" class="hint" style="padding:10px 2px;display:none">加入家庭并打开本页，你会自动登记为家长并显示在这里；其他成员打开本页后也会显示。成员间互相可见，数据端到端加密。</div>
+    <div id="parentHint" class="hint" style="padding:10px 2px;display:none">加入家庭并打开本页，你会自动登记为家庭成员并显示在这里；其他成员打开本页后也会显示。成员间互相可见，数据端到端加密。</div>
     <input id="parentAvatarInput" type="file" accept="image/*" style="display:none" onchange="onParentAvatarPick(event)" />
     <div class="sec">
       <h4>⚙️ 家庭设置</h4>
@@ -453,7 +453,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <div class="sec">
       <h4>使用介绍</h4>
       <p class="hint">• 添加作业：点右下角 ＋，填写科目、文字/链接、上传图片，选截止日期与孩子，保存即同步。</p>
-      <p class="hint">• 家长查看：在「作业」按状态/科目/系列筛选；「统计」看完成率、科目分布、系列进度。</p>
+      <p class="hint">• 家庭成员查看：在「作业」按状态/科目/系列筛选；「统计」看完成率、科目分布、系列进度。</p>
       <p class="hint">• 打卡：每张作业可「✅ 打卡完成」或「📝 部分打卡」（按页码+子任务）。</p>
       <p class="hint">• 加入家庭：家人点你分享的链接，或在本页「加入家庭」输入邀请码+密码，即可在各设备同步。</p>
       <p class="hint">• 识别文字：编辑作业弹窗里点「🔍 识别图片文字」，可自动把作业图片里的文字识别填入（需联网）。</p>
@@ -606,7 +606,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260918.1';
+const APP_VERSION = '20260918.2';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -796,11 +796,17 @@ function familyState(){ try{ return JSON.parse(localStorage.getItem(LS_FAMILY))|
 function joined(){ const f=familyState(); return !!(f&&f.familyId&&f.passphrase); }
 function setFamily(o){ localStorage.setItem(LS_FAMILY,JSON.stringify(o)); }
 function clearFamily(){ localStorage.removeItem(LS_FAMILY); _famKey=null; _famKeySig=null; }
-/* 每台设备一个稳定 ID（与家庭身份分开存，退出家庭后仍在），用于成员列表里标记"我是哪一行"、并作为成员行的唯一 kind */
+/* 每台设备一个稳定 ID（与家庭身份分开存，退出家庭后仍在），仅用于清理旧版按设备生成的残留成员行 */
 function deviceId(){
   let d=localStorage.getItem(LS_DEVICE);
   if(!d){ try{ d=(crypto.randomUUID?crypto.randomUUID():'d'+Date.now().toString(36)+Math.random().toString(36).slice(2)); }catch(e){ d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2); } localStorage.setItem(LS_DEVICE,d); }
   return d;
+}
+/* 成员行以「身份」为 key（而非设备），同一人用电脑/手机多个设备 → 同一 kind → 只会有一行，自动归并 */
+function memberKind(){
+  const f=familyState();
+  const id=((f&&f.member)||'我').toString().trim()||'我';
+  return 'm_'+id;
 }
 
 /* —— 加密（Web Crypto：AES-GCM + PBKDF2） —— */
@@ -893,14 +899,22 @@ async function pullFamilyMeta(){
     }
   }catch(e){ console.error('pullFamilyMeta',e); if(e && /解密失败/.test(e.message||'')) throw e; }
 }
-/* —— 家庭成员列表（端到端加密，每人一条独立成员行，互不覆盖） —— */
+/* —— 家庭成员列表（端到端加密，按「身份」归并，同人多设备只显示一行） —— */
 async function pushMember(){
   if(!joined()) return;
   const sb=getSupabase(); if(!sb) return;
   try{
     const f=familyState(); const key=await famKey();
+    const kind=memberKind();
     const payload=await encBlob({ nick:(f&&f.member)||'我', avatar:(f&&f.myAvatar)||'', joinedAt:Date.now(), lastSeen:Date.now() }, key);
-    await sb.from('family_data').upsert({ family_id:f.familyId, kind:'m_'+deviceId(), payload, updated_at:Date.now() }, {onConflict:'family_id,kind'});
+    // 升级兼容：清掉旧版按设备生成的 m_<deviceId> 残留行，避免同一人重复显示
+    try{ await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind','m_'+deviceId()); }catch(e){}
+    // 身份变更时，清掉旧身份对应的行（同人只保留最新身份一行）
+    if(f.memberPrev && f.memberPrev!==(f.member||'我')){
+      try{ await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind','m_'+(String(f.memberPrev).trim()||'我')); }catch(e){}
+    }
+    f.memberPrev=(f.member||'我'); setFamily(f);
+    await sb.from('family_data').upsert({ family_id:f.familyId, kind, payload, updated_at:Date.now() }, {onConflict:'family_id,kind'});
   }catch(e){ console.error('pushMember',e); }
 }
 async function pullMembers(){
@@ -911,12 +925,23 @@ async function pullMembers(){
     const {data,error}=await sb.from('family_data').select('kind,payload,updated_at').eq('family_id',f.familyId).like('kind','m_%');
     if(error) throw error;
     if(!data||!data.length) return [];
-    const me='m_'+deviceId();
-    const out=[];
+    const me=(f&&f.member)||'我';
+    // 按身份(nick)归并：同一人若残留多条设备行，合并为一条，取最新活跃时间与头像
+    const groups={};
     for(const row of data){
       const obj=await decBlob(row.payload, key);
-      if(obj && obj.nick!==undefined) out.push({ id:row.kind, nick:obj.nick||'我', avatar:obj.avatar||'', lastSeen:obj.lastSeen||row.updated_at||0, isMe:row.kind===me });
+      if(obj && obj.nick!==undefined){
+        const nick=obj.nick||'我';
+        const g=groups[nick]||(groups[nick]={ nick, avatar:'', lastSeen:0, kinds:[] });
+        const ts=obj.lastSeen||row.updated_at||0;
+        if(ts>=g.lastSeen){ g.lastSeen=ts; if(obj.avatar) g.avatar=obj.avatar; }
+        g.kinds.push(row.kind);
+      }
     }
+    const out=Object.keys(groups).map(nick=>{
+      const g=groups[nick];
+      return { id:'m_'+nick, nick:g.nick, avatar:g.avatar, lastSeen:g.lastSeen, isMe:(nick===me), kinds:g.kinds };
+    });
     return out;
   }catch(e){ console.error('pullMembers',e); if(e && /解密失败/.test(e.message||'')) throw e; return []; }
 }
@@ -928,7 +953,10 @@ async function removeMember(id){
   const sb=getSupabase(); if(!sb) return;
   try{
     const f=familyState();
-    await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind',id);
+    // 同一身份可能残留多条设备行，全部删除，确保彻底移除
+    const m=_parentList.find(x=>x.id===id);
+    const kinds=(m&&m.kinds&&m.kinds.length)?m.kinds:[id];
+    for(const k of kinds){ try{ await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind',k); }catch(e){} }
     toast('已移除该成员');
     await renderMembers();
   }catch(e){ toast('移除失败：'+(e&&e.message||e)); }
@@ -962,12 +990,12 @@ async function renderMembers(){
   const box=document.getElementById('parentRoster'); if(!box) return;
   if(!joined()){ box.innerHTML=''; return; }
   if(editingParentId){ renderParentCards(_parentList); return; }
-  box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载家长…</div>';
+  box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载家庭成员…</div>';
   try{
     _parentList=await pullMembers();
     renderParentCards(_parentList);
   }catch(e){
-    box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载家长失败：'+(e&&e.message||e)+'</div>';
+    box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载家庭成员失败：'+(e&&e.message||e)+'</div>';
   }
 }
 function renderParentCards(list){
@@ -1005,9 +1033,9 @@ function renderParentCards(list){
   }).join('');
 }
 function editParent(){
-  const me='m_'+deviceId();
-  editingParentId=me;
-  const cur=_parentList.find(x=>x.id===me);
+  const self=_parentList.find(x=>x.isMe);
+  editingParentId=self?self.id:memberKind();
+  const cur=_parentList.find(x=>x.id===editingParentId);
   parentDraft={ nick:(familyState()&&familyState().member)||'我', avatar:(cur&&cur.avatar)||(familyState()&&familyState().myAvatar)||'' };
   renderParentCards(_parentList);
 }
@@ -1171,7 +1199,7 @@ async function leaveFamily(){
   const f=familyState();
   if(f && f.familyId){
     const sb=getSupabase();
-    try{ if(sb){ await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind','m_'+deviceId()); } }catch(e){ console.error('leaveFamily delete',e); }
+    try{ if(sb){ await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind','m_'+deviceId()); await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind',memberKind()); } }catch(e){ console.error('leaveFamily delete',e); }
   }
   clearFamily(); renderFamilyPanel(); const b=document.getElementById('parentRoster'); if(b) b.innerHTML='';
   toast('已退出家庭（本机数据保留）');
@@ -2151,7 +2179,7 @@ function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k))||[] }catch(e
   <div class="sheet">
     <div class="sheet-head"><span class="h-title">你在家庭的身份</span><button class="x" onclick="closeIdentity()">✕</button></div>
     <div class="sheet-body">
-      <p class="hint">请选择你在这个家庭的身份，其他成员会在「家长」列表里看到。</p>
+      <p class="hint">请选择你在这个家庭的身份，其他成员会在「家庭成员」列表里看到。</p>
       <div class="id-grid" id="idGrid"></div>
       <div class="field" id="idCustomWrap" style="display:none;margin-top:12px"><label>自定义身份</label><input id="idCustom" placeholder="如 姑姑、叔叔" /></div>
     </div>
