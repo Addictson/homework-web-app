@@ -613,9 +613,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
 <script>
 /* ============ 存储层 ============ */
-const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects';
+const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260918.5';
+const APP_VERSION = '20260918.6';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -928,7 +928,7 @@ async function pushMember(){
 }
 async function pullMembers(){
   if(!joined()) return [];
-  const sb=getSupabase(); if(!sb) return [];
+  const sb=getSupabase(); if(!sb) return null;  // 未连云端：返回 null 表示“跳过刷新、保留本地缓存”
   try{
     const f=familyState(); const key=await famKey();
     const {data,error}=await sb.from('family_data').select('kind,payload,updated_at').eq('family_id',f.familyId).like('kind','m_%');
@@ -952,7 +952,7 @@ async function pullMembers(){
       return { id:'m_'+nick, nick:g.nick, avatar:g.avatar, lastSeen:g.lastSeen, isMe:(nick===me), kinds:g.kinds };
     });
     return out;
-  }catch(e){ console.error('pullMembers',e); if(e && /解密失败/.test(e.message||'')) throw e; return []; }
+  }catch(e){ console.error('pullMembers',e); if(e && /解密失败/.test(e.message||'')) throw e; return null; }  // 网络/离线错误：返回 null，保留本地缓存
 }
 async function removeMember(id){
   if(!id) return;
@@ -992,19 +992,29 @@ function relTime(ts){
   if(d<86400000*7) return Math.floor(d/86400000)+' 天前';
   try{ const dt=new Date(ts); return (dt.getMonth()+1)+'/'+dt.getDate(); }catch(e){ return '很久前'; }
 }
-let _parentList=[];
+let _parentList=loadMembersCache();
 let editingParentId=null;
 let parentDraft=null;
+function loadMembersCache(){ try{ const a=JSON.parse(localStorage.getItem(LS_MEMBERS)); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function saveMembersCache(){ try{ localStorage.setItem(LS_MEMBERS, JSON.stringify(_parentList||[])); }catch(e){} }
 async function renderMembers(){
   const box=document.getElementById('parentRoster'); if(!box) return;
   if(!joined()){ box.innerHTML=''; return; }
   if(editingParentId){ renderParentCards(_parentList); return; }
-  box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载家庭成员…</div>';
+  // 先用本地缓存立即渲染（_parentList 启动时已从 LS_MEMBERS 载入），避免每次打开都卡 3 秒等云端
+  if(_parentList && _parentList.length){
+    renderParentCards(_parentList);
+  } else {
+    box.innerHTML='<div class="hint" style="padding:10px 2px">正在加载家庭成员…</div>';
+  }
   try{
-    _parentList=await pullMembers();
+    const fresh=await pullMembers();      // 后台静默刷新
+    if(fresh===null) return;             // 离线/失败：保留已显示的缓存，不报错、不空白
+    _parentList=fresh; saveMembersCache();
     renderParentCards(_parentList);
   }catch(e){
-    box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载家庭成员失败：'+(e&&e.message||e)+'</div>';
+    // 拉取失败（如密码不一致）：保留已显示的缓存；仅当原本就无缓存才提示
+    if(!(_parentList && _parentList.length)) box.innerHTML='<div class="hint" style="padding:10px 2px;color:var(--red)">加载家庭成员失败：'+(e&&e.message||e)+'</div>';
   }
 }
 function renderParentCards(list){
@@ -1220,7 +1230,7 @@ async function leaveFamily(){
     const sb=getSupabase();
     try{ if(sb){ await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind','m_'+deviceId()); await sb.from('family_data').delete().eq('family_id',f.familyId).eq('kind',memberKind()); } }catch(e){ console.error('leaveFamily delete',e); }
   }
-  clearFamily(); renderFamilyPanel(); const b=document.getElementById('parentRoster'); if(b) b.innerHTML='';
+  clearFamily(); _parentList=[]; try{ localStorage.removeItem(LS_MEMBERS); }catch(e){} renderFamilyPanel(); const b=document.getElementById('parentRoster'); if(b) b.innerHTML='';
   toast('已退出家庭（本机数据保留）');
 }
 async function dissolveFamily(){
@@ -1228,7 +1238,7 @@ async function dissolveFamily(){
   if(!confirm('⚠️ 此操作不可恢复！\n将永久删除本家庭在云端的全部数据（作业、孩子、头像、设置），并从本机退出。\n仍要解散吗？')) return;
   const sb=getSupabase();
   try{ if(sb){ await sb.from('family_data').delete().eq('family_id', f.familyId); } }catch(e){ console.error('dissolveFamily cloud', e); }
-  try{ localStorage.removeItem(LS_H); localStorage.removeItem(LS_C); localStorage.removeItem(LS_FAMILY); }catch(e){}
+  try{ localStorage.removeItem(LS_H); localStorage.removeItem(LS_C); localStorage.removeItem(LS_FAMILY); localStorage.removeItem(LS_MEMBERS); }catch(e){}
   _famKey=null; _famKeySig=null;
   toast('本家庭云端数据已删除，正在退出…');
   setTimeout(()=>location.reload(), 800);
