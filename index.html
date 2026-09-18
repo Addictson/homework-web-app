@@ -606,7 +606,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260918.2';
+const APP_VERSION = '20260918.3';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -623,8 +623,8 @@ function setSubjects(arr){
   try{ localStorage.setItem(LS_SUBJECTS, JSON.stringify(uniq)); }catch(e){}
   return uniq;
 }
-/* 家庭成员身份默认选项；同步/加入家庭时弹窗选择，也可选「自定义身份」 */
-const IDENTITIES = ['爸爸','妈妈','爷爷','奶奶','外公','外婆','哥哥','姐姐','弟弟','妹妹','学校老师','托管班老师','自定义身份'];
+/* 家庭成员身份默认选项；同步/加入家庭时弹窗选择，也可选「自定义」（机构+称谓） */
+const IDENTITIES = ['爸爸','妈妈','爷爷','奶奶','外公','外婆','哥哥','姐姐','自定义'];
 let stateData = { children:[], homework:[] };
 function loadChildren(){ return stateData.children; }
 function stampUpdated(a){ (a||[]).forEach(x=>{ if(x&&x.id) x.updatedAt=Date.now(); }); return a; }
@@ -1011,14 +1011,19 @@ function renderParentCards(list){
       const dav=(parentDraft&&parentDraft.avatar)?avatarHtml(parentDraft.avatar,'lg',ph):avatarHtml('','lg',ph);
       const curNick=(parentDraft&&parentDraft.nick)||'我';
       const isCustom = IDENTITIES.indexOf(curNick)<0 && curNick!=='我';
+      const orgV=(familyState()&&familyState().memberOrg)||'';
+      const titleV=(familyState()&&familyState().memberTitle)||'';
       const selOpts = IDENTITIES.map(o=>'<option value="'+o+'"'+(o===curNick?' selected':'')+'>'+o+'</option>').join('')
-         + '<option value="__custom__"'+(isCustom?' selected':'')+'>自定义身份</option>';
+         + '<option value="__custom__"'+(isCustom?' selected':'')+'>自定义</option>';
       return '<div class="card child-card parent-card editing">'
         +'<div class="child-av" onclick="pickParentAvatar()" title="点击更换头像">'+dav+'<div class="av-edit-tip">更换头像</div></div>'
         +'<div class="child-main" style="flex:1;min-width:0">'
         +'<label class="c-lbl">身份（其他成员可见）</label>'
         +'<select class="c-in" id="parentIdentity" onchange="onParentIdentityChange(this)">'+selOpts+'</select>'
-        +'<input class="c-in" id="parentCustom" style="margin-top:6px;display:'+(isCustom?'block':'none')+'" placeholder="自定义身份" value="'+(isCustom?esc(curNick):'')+'" oninput="parentDraft.nick=this.value">'
+        +'<div id="parentCustomWrap" style="display:'+(isCustom?'block':'none')+';margin-top:6px">'
+        +'<input class="c-in" id="parentOrg" style="margin-bottom:6px" placeholder="机构，如 实验小学" value="'+esc(orgV)+'" oninput="onParentCustomInput()">'
+        +'<input class="c-in" id="parentTitle" placeholder="称谓，如 王老师" value="'+esc(titleV)+'" oninput="onParentCustomInput()">'
+        +'</div>'
         +'</div>'
         +'<div class="child-actions"><button class="btn primary sm" onclick="saveParentEdit()">保存</button><button class="btn ghost sm" onclick="cancelParentEdit()">取消</button></div>'
         +'</div>';
@@ -1045,8 +1050,13 @@ function saveParentEdit(){
   const sel=document.getElementById('parentIdentity');
   let nick='我';
   if(sel){
-    if(sel.value==='__custom__'){ const c=document.getElementById('parentCustom'); nick=(c?c.value:'').trim(); }
-    else nick=sel.value;
+    if(sel.value==='__custom__'){
+      const o=document.getElementById('parentOrg'); const t=document.getElementById('parentTitle');
+      const ov=(o?o.value:'').trim(), tv=(t?t.value:'').trim();
+      if(!ov && !tv){ toast('请填写机构或称谓'); return; }
+      f.memberOrg=ov; f.memberTitle=tv;
+      nick=(ov?ov+' ':'')+(tv||''); nick=nick.trim();
+    } else { nick=sel.value; f.memberOrg=''; f.memberTitle=''; }
   } else { nick=(parentDraft&&parentDraft.nick||'我').trim(); }
   f.member=nick||'我';
   f.myAvatar=(parentDraft&&parentDraft.avatar)||'';
@@ -1350,7 +1360,8 @@ function chooseIdentity(cb){
   const grid=document.getElementById('idGrid');
   if(grid) grid.innerHTML=IDENTITIES.map(o=>'<button type="button" class="id-opt" data-opt="'+o+'" onclick="selectIdentity(\''+o+'\',this)">'+o+'</button>').join('');
   const cw=document.getElementById('idCustomWrap'); if(cw) cw.style.display='none';
-  const ci=document.getElementById('idCustom'); if(ci) ci.value='';
+  const io=document.getElementById('idOrg'); if(io) io.value='';
+  const it=document.getElementById('idTitle'); if(it) it.value='';
   _idDone=cb;
   const m=document.getElementById('identityModal'); if(m) m.classList.add('show');
 }
@@ -1358,15 +1369,22 @@ function selectIdentity(opt, btn){
   document.querySelectorAll('#idGrid .id-opt').forEach(b=>b.classList.remove('selected'));
   if(btn) btn.classList.add('selected');
   const cw=document.getElementById('idCustomWrap');
-  if(opt==='自定义身份'){ if(cw) cw.style.display='block'; const ci=document.getElementById('idCustom'); if(ci) ci.focus(); }
+  if(opt==='自定义'){ if(cw) cw.style.display='block'; const io=document.getElementById('idOrg'); if(io) io.focus(); }
   else { if(cw) cw.style.display='none'; }
 }
 function confirmIdentity(){
   const sel=document.querySelector('#idGrid .id-opt.selected');
   let val = sel ? sel.getAttribute('data-opt') : '';
-  if(val==='自定义身份'){ const ci=document.getElementById('idCustom'); val=(ci?ci.value:'').trim(); }
-  if(!val){ toast('请选择身份，或在「自定义身份」里填写'); return; }
-  const f=familyState(); if(f){ f.member=val; setFamily(f); }
+  const f=familyState();
+  if(val==='自定义'){
+    const io=document.getElementById('idOrg'); const it=document.getElementById('idTitle');
+    const o=(io?io.value:'').trim(), t=(it?it.value:'').trim();
+    if(!o && !t){ toast('请填写机构或称谓'); return; }
+    if(f){ f.memberOrg=o; f.memberTitle=t; }
+    val=(o?o+' ':'')+(t||''); val=val.trim();
+  } else if(f){ f.memberOrg=''; f.memberTitle=''; }
+  if(!val){ toast('请选择身份'); return; }
+  if(f){ f.member=val; setFamily(f); }
   const m=document.getElementById('identityModal'); if(m) m.classList.remove('show');
   const cb=_idDone; _idDone=null; if(cb) cb();
 }
@@ -1376,9 +1394,15 @@ function closeIdentity(){
 }
 function onParentIdentityChange(sel){
   if(!parentDraft) parentDraft={};
-  const custom=document.getElementById('parentCustom');
-  if(sel.value==='__custom__'){ if(custom){ custom.style.display='block'; parentDraft.nick=custom.value; custom.focus(); } }
-  else { if(custom) custom.style.display='none'; parentDraft.nick=sel.value; }
+  const wrap=document.getElementById('parentCustomWrap');
+  if(sel.value==='__custom__'){ if(wrap) wrap.style.display='block'; parentDraft.nick=''; }
+  else { if(wrap) wrap.style.display='none'; parentDraft.nick=sel.value; const f=familyState(); if(f){ f.memberOrg=''; f.memberTitle=''; } }
+}
+function onParentCustomInput(){
+  const o=document.getElementById('parentOrg'); const t=document.getElementById('parentTitle');
+  const ov=(o?o.value:'').trim(), tv=(t?t.value:'').trim();
+  if(!parentDraft) parentDraft={};
+  parentDraft.nick=(ov?ov+' ':'')+(tv||''); parentDraft.nick=parentDraft.nick.trim();
 }
 /* 好友自建邀请：仅预填云服务配置，进入创建家庭流程（数据互不干扰） */
 async function setupFromLink(){
@@ -2181,7 +2205,10 @@ function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k))||[] }catch(e
     <div class="sheet-body">
       <p class="hint">请选择你在这个家庭的身份，其他成员会在「家庭成员」列表里看到。</p>
       <div class="id-grid" id="idGrid"></div>
-      <div class="field" id="idCustomWrap" style="display:none;margin-top:12px"><label>自定义身份</label><input id="idCustom" placeholder="如 姑姑、叔叔" /></div>
+      <div class="field" id="idCustomWrap" style="display:none;margin-top:12px">
+        <label>机构</label><input id="idOrg" placeholder="如 实验小学" />
+        <label style="display:block;margin-top:8px">称谓</label><input id="idTitle" placeholder="如 王老师" />
+      </div>
     </div>
     <div class="sheet-foot">
       <button class="btn ghost" onclick="closeIdentity()">取消</button>
