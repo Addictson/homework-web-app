@@ -264,6 +264,111 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     .card-actions{flex:1 1 100%;flex-direction:row;flex-wrap:wrap;justify-content:flex-start}
     .card-actions .btn{width:auto}
   }
+  /* ===== 手机端整体收小（≤600px）：字号/图标/按钮/间距同比缩小；PC（≥768px）完全不受影响，仍走双列宽屏 ===== */
+  @media (max-width:600px){
+    body{font-size:14px}
+    .app{padding-bottom:84px}
+    .title{font-size:15px;padding:9px 12px 3px}
+    .tab{padding:8px 0;font-size:13px}
+    .toolbar{padding:8px 10px;gap:6px}
+    .seg{border-radius:7px}
+    .seg button{padding:5px 8px;font-size:12px}
+    /* 注：输入框字号保持 15px 不动——iOS Safari 对 <16px 的输入框会自动放大页面 */
+    select,input,textarea{padding:8px 9px}
+    textarea{min-height:56px}
+    .field{margin-bottom:10px}
+    .field>label{font-size:12px;margin-bottom:5px}
+    /* 作业卡片 */
+    .card{margin:8px 9px;padding:10px;gap:8px;border-radius:11px}
+    .card-top{margin-bottom:4px}
+    .who{font-size:11px}
+    .child-name{font-size:18px}
+    .grade-badge{font-size:11px;padding:1px 8px}
+    .subject-big{font-size:16px}
+    .content{font-size:14px;margin:5px 0}
+    .meta{font-size:12px;gap:8px;margin-top:5px}
+    .pill{font-size:11px;padding:2px 7px;margin-right:5px}
+    .fld{padding:5px 9px;margin:5px 0 8px}
+    .fld>summary{font-size:12px}
+    .card-foot{margin-top:8px;gap:7px}
+    .card-left{gap:3px}
+    .thumbs{gap:6px;margin-top:7px}
+    .thumbs img{width:72px;height:72px}
+    .pagechip{padding:5px 9px;font-size:12px;margin:0 5px 5px 0}
+    /* 按钮 */
+    .btn{padding:7px 12px;font-size:13px}
+    .btn.sm{padding:5px 9px;font-size:12px}
+    .card-actions{gap:7px;margin-top:8px}
+    .card-actions .btn{min-width:74px}
+    .card-actions .btn.sm{padding:9px 8px;font-size:13px;min-height:40px}
+    .add-hw-btn{padding:7px 13px;font-size:13px}
+    .add-child-btn{padding:7px 12px;font-size:13px}
+    .mini-btn{padding:2px 9px;font-size:11px}
+    /* 头像 */
+    .avatar{width:42px;height:42px;min-width:42px;min-height:42px}
+    .avatar.sm{width:30px;height:30px;min-width:30px;min-height:30px;font-size:13px}
+    .child-card{gap:11px}
+    .child-grade{font-size:12px}
+    /* 家庭页 */
+    .fam-card{padding:11px;gap:11px;border-radius:12px;margin:8px 0}
+    .fam-name{font-size:16px;margin-bottom:6px}
+    .fam-sec-title{font-size:14px}
+    .fam-label{font-size:12px}
+    .fam-val{font-size:16px}
+    .fam-actions{gap:8px}
+    .fam-actions .btn{min-height:44px;min-width:88px;padding:9px 9px;font-size:13px}
+    button[onclick="dissolveFamily()"]{min-height:44px;padding:10px 9px;font-size:13px}
+    button[onclick="clearAll()"]{min-height:42px;padding:10px 9px;font-size:13px}
+    .mem-row{padding:7px 5px;gap:8px}
+    .mem-name{font-size:13px}
+    .mem-sub{font-size:11px}
+    .mem-del{padding:5px 10px;font-size:12px}
+    /* 统计页 */
+    .stat-grid{gap:8px;padding:10px}
+    .stat{padding:11px;border-radius:11px}
+    .stat .n{font-size:22px}
+    .stat .l{font-size:12px}
+    .bar{height:8px;margin:5px 0}
+    .grp{font-size:12px;padding:11px 12px 2px}
+    .page-head{margin:10px 10px 3px}
+    .page-head h3{font-size:16px}
+    /* 通用区块与提示 */
+    .sec{margin:8px 9px;padding:12px;border-radius:11px}
+    .sec h4{font-size:14px}
+    .hint{font-size:11px}
+    .empty{padding:32px 16px;font-size:14px}
+    .toast{font-size:13px;padding:9px 14px}
+    /* 悬浮按钮与底部导航 */
+    .fab{right:14px;bottom:66px;width:48px;height:48px;font-size:25px;line-height:48px}
+    .nav-btn{font-size:10px;padding:4px 0 3px}
+    .nav-btn .ic{font-size:18px}
+    .nav-badge{min-width:15px;height:15px;font-size:9px;line-height:15px}
+    /* 弹窗 */
+    .modal{padding:12px}
+    .sheet{border-radius:14px}
+    .sheet-head{padding:12px 13px 10px}
+    .h-title{font-size:16px}
+    .x{width:30px;height:30px;font-size:16px}
+    .sheet-body{padding:13px}
+    .sheet-foot{padding:11px 13px;gap:8px}
+    .sheet .grp{padding:11px;margin-bottom:11px;border-radius:12px}
+    .grp-h{font-size:12px;margin-bottom:10px}
+    .ex-btn{padding:9px 8px;font-size:12px;border-radius:9px}
+    .up-box{padding:11px;font-size:12px}
+    .sheet h3{font-size:16px;margin:0 0 11px}
+    .sheet .close{font-size:23px;padding:5px 0 10px}
+    .cm-title{font-size:15px}
+    .cm-msg{font-size:14px;margin:10px 2px 15px}
+    .sub-item{padding:7px 10px;margin-bottom:7px}
+    .sub-item .sub-del{padding:4px 10px;font-size:12px}
+    .id-grid{gap:7px}
+    .id-opt{padding:9px 6px;font-size:13px}
+    .img-close{padding:6px 14px;font-size:14px}
+    /* 打卡/感谢特效 */
+    .celebrate .pop{font-size:18px;padding:18px 22px}
+    .celebrate .emoji{font-size:36px}
+    .celebrate.thanks .pop{font-size:15px}
+  }
   /* 桌面自适应：更宽，作业卡片自动双列 */
   @media (min-width:768px){
     .app{max-width:920px}
@@ -623,7 +728,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260920.1';
+const APP_VERSION = '20260920.2';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
