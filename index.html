@@ -216,8 +216,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .celebrate.partial .pop{background:linear-gradient(135deg,#3b82f6,#2563eb);animation:popIn .45s ease}
   .celebrate.full .pop{background:linear-gradient(135deg,#22c55e,#16a34a);animation:popBig .6s cubic-bezier(.2,1.4,.4,1)}
   .celebrate.uncomplete .pop{background:linear-gradient(135deg,#f59e0b,#f97316);animation:popIn .45s ease}
+  .celebrate.thanks .pop{background:linear-gradient(135deg,#f43f5e,#ec4899);animation:popBig .6s cubic-bezier(.2,1.4,.4,1);
+      font-size:16px;font-weight:600;max-width:86%;white-space:pre-line;box-shadow:0 12px 34px rgba(244,63,94,.42)}
+  .celebrate.thanks .emoji{animation:heartFloat 1.6s ease-in-out infinite}
   @keyframes popIn{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
   @keyframes popBig{0%{transform:scale(.4) rotate(-6deg);opacity:0}55%{transform:scale(1.18) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+  @keyframes heartFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.14)}}
   /* ===== 头像编辑器 ===== */
   .avatar-editor{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:16px}
   .avatar-editor.show{display:flex}
@@ -475,6 +479,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <h4>推荐给朋友</h4>
       <button class="btn primary sm" onclick="recommendTool()">🔗 推荐工具</button>
       <p class="hint">把链接发给朋友，他打开即配置就绪，可直接创建自己的家庭（数据端到端加密、互不可见）。</p>
+      <div style="margin-top:12px">
+        <button class="btn ghost sm" onclick="supportAuthor()">❤️ 支持作者</button>
+      </div>
+      <p class="hint">觉得好用想打赏？先点一下看看作者想说的话。</p>
     </div>
     </section>
 
@@ -615,7 +623,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260918.7';
+const APP_VERSION = '20260920.1';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1957,12 +1965,13 @@ function resolveConfirm(v){
   document.getElementById('confirmModal').classList.remove('show');
   if(__confirmResolver){ __confirmResolver(v); __confirmResolver=null; }
 }
-function celebrate(type){
+function celebrate(type, opts){
   const partialMsgs=['不错，已完成一部分，继续加油！','小步前进也是进步，接着来！','已经完成一部分啦，离完成更近一步！'];
   const fullMsgs=['全部完成，太棒了！👏','完美收工，给你点赞！⭐','作业清空，今天也很优秀！🎉'];
   const uncompleteMsgs=['没关系，未完成的部分我们继续加油！','不要气馁，剩下的作业慢慢来，你能行～','暂时的后退没关系，调整好状态我们再出发！'];
-  let msg, emoji;
-  if(type==='full'){ msg=fullMsgs[Math.floor(Math.random()*3)]; emoji='🎉'; }
+  let msg, emoji, ms=2200;
+  if(type==='thanks'){ msg=(opts&&opts.msg)||''; emoji=(opts&&opts.emoji)||'❤️'; ms=(opts&&opts.ms)||4600; }
+  else if(type==='full'){ msg=fullMsgs[Math.floor(Math.random()*3)]; emoji='🎉'; }
   else if(type==='uncomplete'){ msg=uncompleteMsgs[Math.floor(Math.random()*3)]; emoji='🤗'; }
   else { msg=partialMsgs[Math.floor(Math.random()*3)]; emoji='💪'; }
   let el=document.getElementById('celebrate');
@@ -1972,7 +1981,18 @@ function celebrate(type){
   el.querySelector('.txt').textContent=msg;
   el.style.display='flex';
   clearTimeout(el._t);
-  el._t=setTimeout(()=>{ el.style.display='none'; }, 2200);
+  el._t=setTimeout(()=>{ el.style.display='none'; }, ms);
+}
+async function supportAuthor(){
+  const ok = await showConfirm('确认去打赏作者吗？', '支持作者');
+  if(!ok) return;
+  celebrate('thanks', {
+    emoji:'❤️',
+    msg:'谢谢你的心意，打赏真的不用～\n'+
+        '这个工具是作者业余时间做着玩的，纯粹兴趣，不靠它赚钱。\n'+
+        '你的好意我心领啦！\n'+
+        '觉得好用的话，转发给身边需要的家长朋友，就是对我最大的支持 🙏'
+  });
 }
 async function toggleComplete(id){
   const all=loadHomework(); const h=all.find(x=>x.id===id); if(!h)return;
