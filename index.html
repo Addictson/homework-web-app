@@ -103,6 +103,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .avatar-pick .clr{font-size:12px;color:var(--red);cursor:pointer}
   .fam-card{display:flex;align-items:center;gap:14px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
   .fam-card .fam-meta{flex:1;min-width:0}
+  .fam-av-links{display:flex;gap:14px;margin-top:6px;font-size:12px}
+  .fam-av-links label{color:var(--blue);cursor:pointer;text-decoration:underline}
+  .fam-av-links .clr{color:var(--red);cursor:pointer}
   .fam-name{font-size:18px;font-weight:800;color:var(--heading);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fam-member-row{display:flex;gap:8px;margin-bottom:8px}
   .fam-member-row input{flex:1;min-width:0}
@@ -267,7 +270,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   /* ===== 手机端整体收小（≤600px）：字号/图标/按钮/间距同比缩小；PC（≥768px）完全不受影响，仍走双列宽屏 ===== */
   @media (max-width:600px){
     body{font-size:14px}
-    .app{padding-bottom:calc(98px + env(safe-area-inset-bottom))}
+    .app{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
     .title{font-size:15px;padding:9px 12px 3px}
     .tab{padding:8px 0;font-size:13px}
     .toolbar{padding:8px 10px;gap:6px}
@@ -309,20 +312,29 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     .avatar.sm{width:26px;height:26px;min-width:26px;min-height:26px;font-size:12px}
     .child-card{gap:11px}
     .child-grade{font-size:12px}
-    /* 家庭页 */
-    .fam-card{padding:11px;gap:11px;border-radius:12px;margin:8px 0}
-    .fam-name{font-size:16px;margin-bottom:6px}
-    .fam-sec-title{font-size:14px}
-    .fam-label{font-size:12px}
-    .fam-val{font-size:16px}
-    .fam-actions{gap:8px}
-    .fam-actions .btn{min-height:44px;min-width:88px;padding:9px 9px;font-size:13px}
-    button[onclick="dissolveFamily()"]{min-height:44px;padding:10px 9px;font-size:13px}
-    button[onclick="clearAll()"]{min-height:42px;padding:10px 9px;font-size:13px}
-    .mem-row{padding:7px 5px;gap:8px}
-    .mem-name{font-size:13px}
-    .mem-sub{font-size:11px}
-    .mem-del{padding:5px 10px;font-size:12px}
+    /* 家庭页：整体再收一档（卡片 / 头像 / 按钮 / 成员行） */
+    .fam-card{padding:9px;gap:9px;border-radius:11px;margin:7px 0}
+    .fam-name{font-size:15px;margin-bottom:5px}
+    .fam-name-input{font-size:15px}
+    .fam-sec-title{font-size:13px;margin-bottom:6px}
+    .fam-label{font-size:11px}
+    .fam-val{font-size:15px}
+    .fam-avatar-box{width:60px;height:60px}
+    .fam-avatar-box .avatar.lg{width:60px;height:60px;min-width:60px;min-height:60px;font-size:21px}
+    .fam-avatar-empty{font-size:10px;padding:2px}
+    .fam-av-links{font-size:11px;gap:12px;margin-top:5px}
+    .fam-actions{gap:7px}
+    .fam-actions .btn{min-height:38px;min-width:78px;padding:7px 8px;font-size:12px}
+    button[onclick="dissolveFamily()"]{min-height:38px;padding:8px 9px;font-size:12px}
+    button[onclick="clearAll()"]{min-height:38px;padding:8px 9px;font-size:12px}
+    .fam-members-sec{margin-top:11px;padding-top:9px}
+    .mem-row{padding:5px 4px;gap:7px}
+    .mem-name{font-size:12px;gap:4px}
+    .mem-me{font-size:10px;padding:1px 6px}
+    .mem-sub{font-size:11px;margin-top:1px}
+    .mem-del{padding:4px 9px;font-size:11px}
+    #familyView .sec{padding:10px;margin:7px 9px}
+    #familyView .fbox{padding:8px 10px;margin:8px 0}
     /* 统计页 */
     .stat-grid{gap:8px;padding:10px}
     .stat{padding:11px;border-radius:11px}
@@ -339,9 +351,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     .empty{padding:32px 16px;font-size:14px}
     .toast{font-size:13px;padding:9px 14px}
     /* 悬浮按钮与底部导航：导航整体上移并做成悬浮圆角条，避开手机系统底部手势条，减少误触 */
-    .fab{right:14px;bottom:calc(72px + env(safe-area-inset-bottom));width:48px;height:48px;font-size:25px;line-height:48px}
-    .bottom-nav{bottom:calc(8px + env(safe-area-inset-bottom));left:8px;right:8px;padding:6px 0;
-        border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.14);overflow:hidden}
+    .fab{right:14px;bottom:calc(76px + env(safe-area-inset-bottom));width:48px;height:48px;font-size:25px;line-height:48px}
+    .bottom-nav{bottom:0;left:0;right:0;border:0;border-top:1px solid var(--line);border-radius:0;
+        box-shadow:0 -2px 12px rgba(0,0,0,.08);padding:6px 0 calc(18px + env(safe-area-inset-bottom))}
     .nav-btn{font-size:10px;padding:4px 0 3px}
     .nav-btn .ic{font-size:18px}
     .nav-badge{min-width:15px;height:15px;font-size:9px;line-height:15px}
@@ -364,7 +376,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     .sub-item{padding:7px 10px;margin-bottom:7px}
     .sub-item .sub-del{padding:4px 10px;font-size:12px}
     .id-grid{gap:7px}
-    .id-opt{padding:9px 6px;font-size:13px}
+    .id-opt{padding:8px 5px;font-size:12px}
     .img-close{padding:6px 14px;font-size:14px}
     /* 打卡/感谢特效 */
     .celebrate .pop{font-size:18px;padding:18px 22px}
@@ -515,6 +527,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
                 <div class="fam-edit-wrap" id="familyNameEdit" style="display:none">
                   <input class="fam-name-input" id="familyInfo" placeholder="家庭名称" onchange="saveFamilyName()" data-page-node-id="u0SFhIhLSHRG9gErTf3xvQ" />
                 </div>
+              </div>
+              <div class="fam-av-links" id="famAvatarLinks" style="display:none">
+                <label onclick="document.getElementById('familyAvatarInput').click()">重新上传</label>
+                <span class="clr" onclick="clearFamilyAvatar()">清除头像</span>
               </div>
               <input id="familyAvatarInput" type="file" accept="image/*" style="display:none" onchange="onFamilyAvatarPick(event)" data-page-node-id="u76A3w23mbqxjJtaYS6dBK" />
             </div>
@@ -716,7 +732,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260920.3';
+const APP_VERSION = '20260920.4';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -756,19 +772,28 @@ function resizeAvatar(file, cb){
 }
 /* ============ 头像编辑器（拖动平移 / 缩放 / 旋转 / 圆形裁剪） ============ */
 let ae = { img:null, scale:1, baseScale:1, panX:0, panY:0, rot:0, cb:null, ST:280, CS:240, dpr:1, dragging:false, lx:0, ly:0 };
+function aeStart(img, cb){
+  ae.img=img; ae.cb=cb; ae.panX=0; ae.panY=0; ae.rot=0;
+  const minS=Math.min(img.width, img.height);
+  ae.baseScale=(280-40)/minS;   // 以基准舞台 280、边距 20 计算，使图片恰好铺满裁剪框
+  ae.scale=ae.baseScale;
+  document.getElementById('avatarEditor').classList.add('show');
+  aeBind();          // 此刻元素必定存在，绑定拖动/双指捏合/滚轮
+  aeLayout(); aeSyncZoom(); aeRender();
+}
 function openAvatarEditor(file, cb){
   const r=new FileReader();
-  r.onload=()=>{ const img=new Image(); img.onload=()=>{
-    ae.img=img; ae.cb=cb; ae.panX=0; ae.panY=0; ae.rot=0;
-    const minS=Math.min(img.width, img.height);
-    ae.baseScale=(280-40)/minS;   // 以基准舞台 280、边距 20 计算，使图片恰好铺满裁剪框
-    ae.scale=ae.baseScale;
-    document.getElementById('avatarEditor').classList.add('show');
-    aeBind();          // 此刻元素必定存在，绑定拖动/双指捏合/滚轮
-    aeLayout(); aeSyncZoom(); aeRender();
-  }; img.onerror=()=>toast('图片读取失败'); img.src=r.result; };
+  r.onload=()=>{ const img=new Image(); img.onload=()=>aeStart(img,cb); img.onerror=()=>toast('图片读取失败'); img.src=r.result; };
   r.onerror=()=>toast('文件读取失败');
   r.readAsDataURL(file);
+}
+// 已经上传过头像素材时：直接用原图进裁剪器重新调整（缩放/旋转/平移），不必再选一次文件
+function editExistingAvatar(src, cb){
+  if(!src){ toast('还没有头像，请先上传'); return; }
+  const img=new Image();
+  img.onload=()=>aeStart(img,cb);
+  img.onerror=()=>toast('原图加载失败，请重新上传一张');
+  img.src=src;
 }
 function aeLayout(){
   const stage=document.getElementById('aeStage');
@@ -1254,6 +1279,8 @@ function renderFamilyPanel(){
   const faw=document.getElementById('familyAvatarWrap');
   if(faw) faw.innerHTML = (isJoined&&f&&f.avatar)? avatarHtml(f.avatar,'lg', famInitial||'家') : '';
   if(document.getElementById('familyAvatarHint')) document.getElementById('familyAvatarHint').style.display = (isJoined&&f&&!f.avatar)?'flex':'none';
+  const fal=document.getElementById('famAvatarLinks');
+  if(fal) fal.style.display = (isJoined&&f&&f.avatar)?'flex':'none';
 }
 function onFamilyAvatarPick(e){
   const file=e.target.files&&e.target.files[0]; if(!file)return;
@@ -1264,7 +1291,14 @@ function clearFamilyAvatar(){ const f=familyState(); if(!f)return; f.avatar=''; 
 function onFamilyAvatarAreaClick(){
   if(!joined()){ toast('请先创建或加入家庭'); return; }
   const f=familyState();
-  if(f && f.avatar){ openFamilyAvatarModal(); }
+  // 已有头像：直接用原图进裁剪器重新缩放/旋转；还没有头像：走选择文件
+  if(f && f.avatar){
+    editExistingAvatar(f.avatar, d=>{
+      if(!d) return;
+      const ff=familyState(); if(!ff) return;
+      ff.avatar=d; setFamily(ff); renderFamilyPanel(); pushFamilyMeta();
+    });
+  }
   else { const el=document.getElementById('familyAvatarInput'); if(el) el.click(); }
 }
 function openFamilyAvatarModal(){
@@ -1754,7 +1788,7 @@ function renderChildren(){
     if(c.id===editingChildId && editingChildDraft){
       return `<div class="card child-edit-card">
         <div class="avatar-pick">
-          ${avatarHtml(editingChildDraft.avatar,'lg',(editingChildDraft.name||'孩').slice(0,1))}
+          <span onclick="onChildAvatarClick()" style="cursor:pointer;display:inline-block;line-height:0" title="点击调整头像">${avatarHtml(editingChildDraft.avatar,'lg',(editingChildDraft.name||'孩').slice(0,1))}</span>
           <div>
             <label onclick="pickChildAvatar()">上传头像</label>
             ${editingChildDraft.avatar?'<span class="clr" onclick="clearDraftAvatar()">清除</span>':''}
@@ -2228,6 +2262,13 @@ let editingChildId=null;
 let editingChildIsNew=false;
 let editingChildDraft=null;
 function pickChildAvatar(){ const el=document.getElementById('childAvatarInput'); if(el) el.click(); }
+// 编辑孩子时点头像：已上传过就直接拿原图进裁剪器重调，没有头像则去选文件
+function onChildAvatarClick(){
+  if(!editingChildDraft) return;
+  if(editingChildDraft.avatar){
+    editExistingAvatar(editingChildDraft.avatar, d=>{ if(!d)return; if(editingChildDraft){ editingChildDraft.avatar=d; renderChildren(); } });
+  } else { pickChildAvatar(); }
+}
 function onChildAvatarPick(e){
   const file=e.target.files&&e.target.files[0]; if(!file)return;
   openAvatarEditor(file, d=>{ if(d && editingChildDraft){ editingChildDraft.avatar=d; renderChildren(); } });
