@@ -825,7 +825,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20261010.4';
+const APP_VERSION = '20261010.5';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1175,7 +1175,7 @@ async function pushFamilyMeta(){
   try{
     const key=await famKey();
     const pins=getPins();
-    const meta={ name:f.familyName, avatar:f.avatar||'' };
+    const meta={ name:f.familyName, avatar:f.avatar||'', avatarAt:Number(f.avatarAt||0) };
     if(pinsReady()) meta.pins={ owner:pins.owner||null, staff:pins.staff||{} };   // 没同步过 PIN 就不推，避免覆盖
     const payload=await encBlob(meta, key);
     await sb.from('family_data').upsert({family_id:f.familyId, kind:'meta', payload, updated_at:Date.now()}, {onConflict:'family_id,kind'});
@@ -1192,10 +1192,20 @@ async function pullFamilyMeta(){
     const meta=await decBlob(data.payload, key);
     if(meta===null){ throw new Error('解密失败：家庭密码不正确或数据已损坏'); }
     if(meta){
-      // 云端为家庭级唯一真相：只要云端有值（含空值，表示已清除）就以云端为准，确保改名/换头像/清除能同步到所有设备
+      // 家庭名称：云端为家庭级唯一真相（含空值＝已清除）
       f.familyName = (meta.name!==undefined)? meta.name : f.familyName;
-      f.avatar = (meta.avatar!==undefined)? meta.avatar : f.avatar;
+      // 头像：带时间戳，新的覆盖旧的。关键——绝不让「空的云端值」把本机已有头像抹掉（曾因此全家的家庭头像消失）
+      if(meta.avatar!==undefined){
+        if(meta.avatarAt!==undefined){
+          const cAt=Number(meta.avatarAt)||0, lAt=Number(f.avatarAt)||0;
+          if(cAt>=lAt){ f.avatar=meta.avatar||''; f.avatarAt=cAt; }
+        } else if(meta.avatar || !f.avatar){   // 旧版数据无时间戳：空头像不覆盖本机已有头像
+          f.avatar=meta.avatar||'';
+        }
+      }
       setFamily(f);
+      // 本机有头像、云端却是空的 → 回推一次，自动修复被空值抹掉的云端头像
+      if(f.avatar && !meta.avatar){ setTimeout(()=>{ try{ pushFamilyMeta(); }catch(e){} }, 0); }
       // PIN 随家庭同步：云端有值→写入本机；云端为空串→表示已关闭 PIN，清本机
       if(meta.pins!==undefined){
         setPins({ owner:(meta.pins&&meta.pins.owner)||null, staff:(meta.pins&&meta.pins.staff)||{} });
@@ -1212,8 +1222,18 @@ async function pullFamilyMeta(){
 /* —— 家庭成员列表（端到端加密，按「身份」归并，同人多设备只显示一行） —— */
 async function pushMember(){
   if(!joined()) return;
-  const sb=getSupabase(); if(!sb) return;
+  const sb0=getSupabase(); if(!sb0) return;
+  const s0=currentSession();
+  if(s0 && s0.type==='child'){
+    // 孩子不算「家长 / 老师」，不登记；顺便清掉旧版可能留下的残留行
+    try{
+      const f=familyState();
+      if(f && f.member) await sb0.from('family_data').delete().eq('family_id',f.familyId).eq('kind','m_'+(String(f.member).trim()||'我'));
+    }catch(e){}
+    return;
+  }
   try{
+    const sb=sb0;
     const f=familyState(); const key=await famKey();
     const kind=memberKind();
     const s=currentSession()||{};
@@ -1330,9 +1350,11 @@ async function renderMembers(){
 function renderParentCards(list){
   const box=document.getElementById('parentRoster'); if(!box) return;
   if(!joined()){ box.innerHTML=''; return; }
-  if(!list || !list.length){ box.innerHTML=''; return; }
-  list.sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0) || (b.lastSeen-a.lastSeen));
-  box.innerHTML=list.map(m=>{
+  // 「家长 / 老师」只列家长与老师；孩子属于「孩子身份」区块，不进这里
+  const adults=(list||[]).filter(m=>m.role!=='child');
+  if(!adults.length){ box.innerHTML=''; return; }
+  adults.sort((a,b)=> (b.isMe?1:0)-(a.isMe?1:0) || (b.lastSeen-a.lastSeen));
+  box.innerHTML=adults.map(m=>{
     const ph=(m.nick||'我').replace(/\s/g,'').slice(0,1)||'我';
     const av=m.avatar?avatarHtml(m.avatar,'lg',ph):avatarHtml('','lg',ph);
     const active='<div class="child-grade">最近活跃：'+fmtActive(m.lastSeen)+'</div>';
@@ -1479,15 +1501,21 @@ function renderFamilyPanel(){
   if(fal) fal.style.display = (isJoined&&f&&f.avatar&&canEditHome)?'flex':'none';
   renderAuthPanel();          // 登录态与 PIN 状态随家庭状态一起刷新
 }
+/* 改家庭头像的统一入口：打上时间戳，保证「谁最后改谁生效」，旧设备推送的空值不会把头像抹掉 */
+function setFamilyAvatar(v){
+  const f=familyState(); if(!f) return;
+  f.avatar=v||''; f.avatarAt=Date.now(); setFamily(f);
+  renderFamilyPanel(); pushFamilyMeta();
+}
 function onFamilyAvatarPick(e){
   if(!isOwnerSession()){ toast('只有「爸爸 / 妈妈」能改家庭头像'); return; }
   const file=e.target.files&&e.target.files[0]; if(!file)return;
-  openAvatarEditor(file, d=>{ if(!d)return; const f=familyState(); if(!f)return; f.avatar=d; setFamily(f); renderFamilyPanel(); closeFamilyAvatarModal(); pushFamilyMeta(); });
+  openAvatarEditor(file, d=>{ if(!d)return; setFamilyAvatar(d); closeFamilyAvatarModal(); });
   e.target.value='';
 }
 function clearFamilyAvatar(){
   if(!isOwnerSession()){ toast('只有「爸爸 / 妈妈」能改家庭头像'); return; }
-  const f=familyState(); if(!f)return; f.avatar=''; setFamily(f); renderFamilyPanel(); pushFamilyMeta();
+  setFamilyAvatar('');
 }
 function onFamilyAvatarAreaClick(){
   if(!joined()){ toast('请先创建或加入家庭'); return; }
@@ -1495,11 +1523,7 @@ function onFamilyAvatarAreaClick(){
   const f=familyState();
   // 已有头像：直接用原图进裁剪器重新缩放/旋转；还没有头像：走选择文件
   if(f && f.avatar){
-    editExistingAvatar(f.avatar, d=>{
-      if(!d) return;
-      const ff=familyState(); if(!ff) return;
-      ff.avatar=d; setFamily(ff); renderFamilyPanel(); pushFamilyMeta();
-    });
+    editExistingAvatar(f.avatar, d=>{ if(!d) return; setFamilyAvatar(d); });
   }
   else { const el=document.getElementById('familyAvatarInput'); if(el) el.click(); }
 }
