@@ -561,12 +561,12 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         </div>
         <div class="fam-actions" data-page-node-id="GuixMShBmfiEG3O97VD45o">
           <button class="btn ghost sm" onclick="syncNow()" data-page-node-id="rP7oJ4cTeJMGKz4hwxQPeX">立即同步</button>
-          <button class="btn ghost sm" onclick="leaveFamily()" data-page-node-id="aw3vUtVoACDcItpZM8N3C1">退出家庭</button>
-          <button class="btn primary sm" onclick="shareFamily()" data-page-node-id="UH6SXoygxEfUh7bI9PQLiz">🔗 分享家庭</button>
+          <button class="btn ghost sm" id="leaveFamilyBtn" onclick="leaveFamily()" data-page-node-id="aw3vUtVoACDcItpZM8N3C1">退出家庭</button>
+          <button class="btn primary sm" id="shareFamilyBtn" onclick="shareFamily()" data-page-node-id="UH6SXoygxEfUh7bI9PQLiz">🔗 分享家庭</button>
           <button class="btn ghost sm" id="roleLinksBtn" onclick="showRoleLinks()" data-page-node-id="rL8kQ2nVbX4mZ7wE9tYcJ3">👤 角色专属链接</button>
         </div>
-        <div style="margin-top:10px">
-          <button class="btn danger" style="width:100%" onclick="dissolveFamily()" data-page-node-id="dJ8kXqLz9mN2pQr4vW6yT1">🗑️ 解散本家庭（删除云端全部数据）</button>
+        <div style="margin-top:10px" id="dissolveWrap">
+          <button class="btn danger" style="width:100%" id="dissolveFamilyBtn" onclick="dissolveFamily()" data-page-node-id="dJ8kXqLz9mN2pQr4vW6yT1">🗑️ 解散本家庭（删除云端全部数据）</button>
         </div>
         <div id="linkBox" style="display:none;margin-top:12px;padding:12px 14px;background:var(--soft);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.12)" data-page-node-id="GrHbHYXpDDb798PRubByXW">
           <div id="linkBoxTitle" style="font-weight:700;color:var(--blue);margin-bottom:8px;font-size:14px" data-page-node-id="1CP6NKKF8eAxmLzk5RlVyl"></div>
@@ -627,11 +627,11 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <section id="settingsView" style="display:none" data-page-node-id="settingsView-1">
     <div class="sec" data-page-node-id="cGMOg46WtZtMhhj1VhV1bI"><h4 data-page-node-id="6pozHkswnJVmN8oO3vhfos">数据</h4>
       <button class="btn ghost sm" onclick="exportData()" data-page-node-id="5T3k2BiFvSFBiperLOxx1R">导出备份(JSON)</button>
-      <button class="btn ghost sm" onclick="importData()" data-page-node-id="f93H98Xd2Gp1Ozn0YNLmoT">导入备份</button>
-      <button class="btn danger sm" onclick="clearAll()" data-page-node-id="inw9GZfIOAiJYVSDHRLXd1">清空全部数据</button>
+      <button class="btn ghost sm" id="importDataBtn" onclick="importData()" data-page-node-id="f93H98Xd2Gp1Ozn0YNLmoT">导入备份</button>
+      <button class="btn danger sm" id="clearAllBtn" onclick="clearAll()" data-page-node-id="inw9GZfIOAiJYVSDHRLXd1">清空全部数据</button>
       <p class="hint" data-page-node-id="pIiBXqIfuX5yXwJ1FcMgXU">数据仅保存在本机浏览器(localStorage)，换设备/清缓存会丢失，请定期导出备份。</p>
     </div>
-    <div class="sec">
+    <div class="sec" id="cloudSec">
       <h4>云端同步设置（Supabase）</h4>
 <details class="fld" data-page-node-id="6Upx2tHPeG5tKy22JJGYjH"><summary data-page-node-id="OYXFquuiQf3ellP3qIO9lm">云服务配置（Supabase）</summary>
         <div class="field" data-page-node-id="bPzcIOFVO7zhmHgQBIpEUR"><label data-page-node-id="dC0oggw7e4BesOhEiQNMW5">Supabase URL</label><input id="cloudUrl" placeholder="https://xxxx.supabase.co" data-page-node-id="lbkybKCmfN9zoI4L9aUfSO" /></div>
@@ -825,7 +825,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20261010.6';
+const APP_VERSION = '20261010.7';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1495,6 +1495,11 @@ function renderFamilyPanel(){
   // 「角色专属链接」含家庭密码：只有家长 / 老师登录时才显示（孩子登录或未登录一律隐藏）
   const roleBtn=document.getElementById('roleLinksBtn');
   if(roleBtn) roleBtn.style.display = isGuardSession() ? '' : 'none';
+  // 家庭级的改动入口：孩子与访客只读——能看「家长 / 老师」名单，但不能退出、分享、解散
+  const isGuard=isGuardSession(), isOwner=isOwnerSession();
+  const lfb=document.getElementById('leaveFamilyBtn'); if(lfb) lfb.style.display = isGuard ? '' : 'none';
+  const sfb=document.getElementById('shareFamilyBtn'); if(sfb) sfb.style.display = isGuard ? '' : 'none';
+  const dsw=document.getElementById('dissolveWrap'); if(dsw) dsw.style.display = isOwner ? '' : 'none';
 
   const famInitial = (f&&f.familyName&&f.familyName.trim())? f.familyName.trim().charAt(0) : '';
   const faw=document.getElementById('familyAvatarWrap');
@@ -1538,6 +1543,7 @@ function openFamilyAvatarModal(){
 }
 function closeFamilyAvatarModal(){ const m=document.getElementById('familyAvatarModal'); if(m) m.classList.remove('show'); }
 function saveCloudConfig(){
+  if(joined() && !isOwnerSession()){ toast('只有「爸爸 / 妈妈」能改云服务配置'); return; }
   const c={ url:document.getElementById('cloudUrl').value.trim(), key:document.getElementById('cloudKey').value.trim() };
   if(!c.url||!c.key){ toast('请填写 Supabase URL 与 Key'); return; }
   localStorage.setItem(LS_CLOUD,JSON.stringify(c)); _sb=null; toast('已保存云服务配置');
@@ -1653,6 +1659,7 @@ async function recommendTool(){
 }
 async function shareFamily(){
   if(!joined()){ toast('请先创建或加入家庭'); return; }
+  if(!isGuardSession()){ toast('请先用「家长 / 老师」身份登录，才能分享家庭'); return; }
   const c=cloudConfig()||{};
   if(!c.url||!c.key){ toast('请先在「云服务配置」填好 Supabase URL 与 Key'); return; }
   showLinkBox('分享家庭：把链接或下方二维码发给家人。家人扫码复制「家庭ID|密码」后，在作业网页点「加入家庭」粘贴即可同步（含家庭密码，勿外泄）', buildShareLink());
@@ -1963,6 +1970,10 @@ function updateBadges(){
 function renderSettings(){
   renderFamilyPanel();
   renderPinSettings();
+  // 数据类操作只有家长 / 老师能做：孩子与访客看不到「清空全部数据 / 导入备份 / 改云服务配置」
+  const canAll=(!joined()||isGuardSession());
+  ['clearAllBtn','importDataBtn'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display = canAll?'':'none'; });
+  const cloudSec=document.getElementById('cloudSec'); if(cloudSec) cloudSec.style.display = canAll?'':'none';
 }
 function switchTab(t){
   state.tab=t;
@@ -3016,7 +3027,8 @@ function exportData(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='homework-backup-'+today()+'.json'; a.click(); toast('已导出备份');
 }
-function importData(){
+async function importData(){
+  if(!(await requireOwner())) return;
   const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const r=new FileReader();
     r.onload=()=>{ try{ const d=JSON.parse(r.result);
@@ -3025,7 +3037,8 @@ function importData(){
     r.readAsText(f); };
   inp.click();
 }
-function clearAll(){
+async function clearAll(){
+  if(!(await requireOwner())) return;
   if(!confirm('将清空本机全部作业与孩子数据，且无法恢复（除非有备份），确定？'))return;
   stateData.children=[]; stateData.homework=[];
   localStorage.removeItem(LS_C); localStorage.removeItem(LS_H); render(); toast('已清空');
