@@ -199,6 +199,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .pin-pad button.ph{visibility:hidden}
   .pin-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;border:1px solid var(--line);background:var(--soft);color:var(--sub);cursor:pointer}
   .pin-badge.open{color:var(--green);border-color:var(--green)}
+  .role-link-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
+  .role-link-row:last-child{border-bottom:none}
+  .rl-name{font-size:14px;color:var(--ink)}
   .cm-actions .btn{flex:1}
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
   .stat{background:var(--surface);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
@@ -549,6 +552,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
           <button class="btn ghost sm" onclick="syncNow()" data-page-node-id="rP7oJ4cTeJMGKz4hwxQPeX">立即同步</button>
           <button class="btn ghost sm" onclick="leaveFamily()" data-page-node-id="aw3vUtVoACDcItpZM8N3C1">退出家庭</button>
           <button class="btn primary sm" onclick="shareFamily()" data-page-node-id="UH6SXoygxEfUh7bI9PQLiz">🔗 分享家庭</button>
+          <button class="btn ghost sm" onclick="showRoleLinks()" data-page-node-id="rL8kQ2nVbX4mZ7wE9tYcJ3">👤 角色专属链接</button>
         </div>
         <div style="margin-top:10px">
           <button class="btn danger" style="width:100%" onclick="dissolveFamily()" data-page-node-id="dJ8kXqLz9mN2pQr4vW6yT1">🗑️ 解散本家庭（删除云端全部数据）</button>
@@ -762,6 +766,15 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   </div>
 </div>
 
+<div class="modal" id="roleLinkModal" onclick="if(event.target===this)closeRoleLinks()">
+  <div class="sheet" style="max-width:400px">
+    <div class="cm-title">👤 角色专属链接</div>
+    <div class="cm-msg">给每个人发他自己的链接，点开就自动是这个身份，不用再选。链接含家庭密码，别发到群里。</div>
+    <div id="roleLinkList" style="max-height:46vh;overflow:auto;margin-bottom:14px"></div>
+    <div class="cm-actions"><button class="btn ghost" onclick="closeRoleLinks()">关闭</button></div>
+  </div>
+</div>
+
 <div class="modal img-modal" id="imgModal" onclick="if(event.target===this)closeImg()">
   <div class="img-wrap">
     <img id="imgModalImg" src="" alt="预览">
@@ -775,7 +788,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20261009.1';
+const APP_VERSION = '20261009.2';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1455,9 +1468,10 @@ async function dissolveFamily(){
   toast('本家庭云端数据已删除，正在退出…');
   setTimeout(()=>location.reload(), 800);
 }
-function buildShareLink(){
+function buildShareLink(role){
   const f=familyState(); const c=cloudConfig()||{};
   const payload={u:c.url||'', k:c.key||'', c:f.familyId, p:f.passphrase};
+  if(role) payload.r=String(role);           // 角色专属链接：点开自动成为该身份，无需再选
   const enc=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
   return (location.origin+location.pathname)+'#join='+enc;
 }
@@ -1490,6 +1504,28 @@ async function shareFamily(){
   const box=document.getElementById('linkBoxQr');
   const tip=document.getElementById('linkBoxQrTip');
   if(box){ try{ box.innerHTML=genQR(qrText); if(tip) tip.style.display='block'; }catch(e){ box.innerHTML='<div class="hint">二维码生成失败，请直接复制链接或家庭ID|密码</div>'; if(tip) tip.style.display='none'; } }
+}
+/* —— 角色专属链接：每人一条，点开自动成为该身份 —— */
+function showRoleLinks(){
+  if(!joined()){ toast('请先创建或加入家庭'); return; }
+  const c=cloudConfig()||{};
+  if(!c.url||!c.key){ toast('请先在「云服务配置」填好 Supabase URL 与 Key'); return; }
+  const box=document.getElementById('roleLinkList'); if(!box) return;
+  const list=IDENTITIES.filter(x=>x!=='自定义');
+  box.innerHTML=list.map(r=>'<div class="role-link-row"><span class="rl-name">'+esc(r)+'</span><button class="btn ghost sm" onclick="copyRoleLink(\''+esc(r)+'\')">复制链接</button></div>').join('')
+    + '<div class="role-link-row"><span class="rl-name" style="color:var(--sub)">自定义…</span><button class="btn ghost sm" onclick="copyCustomRoleLink()">填写后复制</button></div>';
+  document.getElementById('roleLinkModal').classList.add('show');
+}
+function closeRoleLinks(){ const m=document.getElementById('roleLinkModal'); if(m) m.classList.remove('show'); }
+async function copyRoleLink(role){
+  const link=buildShareLink(role);
+  try{ await navigator.clipboard.writeText(link); toast('「'+role+'」的链接已复制，发给他点开即可'); }
+  catch(e){ prompt('复制「'+role+'」的链接：', link); }
+}
+async function copyCustomRoleLink(){
+  const v=prompt('输入身份称谓（例如：舅舅、托管老师、阿姨）：','');
+  if(!v || !v.trim()) return;
+  await copyRoleLink(v.trim());
 }
 /* —— 修改家庭密码（端到端加密下：密码即密钥，需重加密全家数据） —— */
 /* 统一的醒目链接展示区：同一时刻只显示一种链接，避免两个框同时出现、提示不清 */
@@ -1526,12 +1562,21 @@ async function joinFromLink(){
   if(payload.u && payload.k){ // 链接携带的配置优先于内置默认值
     localStorage.setItem(LS_CLOUD, JSON.stringify({url:payload.u, key:payload.k})); _sb=null;
   }
+  const role=(payload.r||'').toString().trim();
   document.getElementById('joinFamCode').value=(payload.c||'').toUpperCase();
   document.getElementById('joinFamPass').value=(payload.p||'');
   switchTab('stats');
   if(joined()){
     const cur=familyState();
     if(cur.familyId===payload.c && cur.passphrase===payload.p){
+      // 已是同一家庭同一密码：链接带角色且与当前身份不同 → 直接切换身份
+      if(role && role!==(cur.member||'')){
+        cur.memberPrev=cur.member||'我'; cur.member=role; setFamily(cur);
+        renderFamilyPanel();
+        toast('身份已切换为「'+role+'」');
+        await syncNow(); await pushMember(); await renderMembers();
+        return true;
+      }
       // 已是同一家庭同一密码：直接同步
       renderFamilyPanel();
       toast('已通过分享链接加入家庭（邀请码 '+payload.c+'）');
@@ -1539,16 +1584,17 @@ async function joinFromLink(){
       return true;
     }
     // 已加入其他家庭或密码不同：允许用链接覆盖身份（含正确密码），一键纠正
-    setFamily({familyId:payload.c, familyName:'', passphrase:payload.p, member:cur.member||'我'});
+    setFamily({familyId:payload.c, familyName:'', passphrase:payload.p, member:role||cur.member||'我', memberPrev:cur.member||'我'});
     renderFamilyPanel();
     toast('已用分享链接更新家庭身份（邀请码 '+payload.c+'）');
     await syncNow();
     return true;
   }
-  setFamily({familyId:payload.c, familyName:'', passphrase:payload.p, member:'我'});
+  setFamily({familyId:payload.c, familyName:'', passphrase:payload.p, member:role||'我'});
   renderFamilyPanel();
-  toast('已通过分享链接加入家庭（邀请码 '+payload.c+'）');
-  chooseIdentity(async ()=>{ await syncNow(); });
+  toast(role ? ('已加入家庭，你的身份：'+role) : ('已通过分享链接加入家庭（邀请码 '+payload.c+'）'));
+  // member 已由链接指定时，chooseIdentity 会自动跳过弹窗直接回调
+  chooseIdentity(async ()=>{ await syncNow(); await pushMember(); await renderMembers(); });
   return true;
 }
 
