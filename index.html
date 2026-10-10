@@ -203,7 +203,22 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .role-link-row:last-child{border-bottom:none}
   .rl-name{font-size:14px;color:var(--ink)}
   .rl-btns{display:flex;gap:6px;flex-shrink:0}
+  .rl-sec{display:flex;align-items:baseline;gap:8px;margin:14px 0 2px;font-size:13px;font-weight:600;color:var(--ink)}
+  .rl-sec span{font-size:11px;font-weight:400;color:var(--sub)}
   #roleLinkQr svg{max-width:220px;height:auto}
+  .login-sec{display:flex;align-items:baseline;gap:8px;margin:4px 0 8px}
+  .login-sec b{font-size:14px;color:var(--ink)}
+  .login-sec span{font-size:11px;color:var(--sub)}
+  .login-sec.child{margin-top:20px}
+  .pending-bar{margin:6px 0 0;padding:8px 10px;border-radius:9px;background:rgba(245,158,11,.14);
+    border:1px solid rgba(245,158,11,.5);font-size:12px;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pending-bar .pbtn{margin-left:auto;padding:4px 10px;border-radius:7px;border:1px solid var(--green);
+    background:transparent;color:var(--green);font-size:12px;cursor:pointer}
+  .pending-sum{margin:8px 0;padding:10px 12px;border-radius:10px;background:rgba(245,158,11,.14);
+    border:1px solid rgba(245,158,11,.5);font-size:13px;color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pending-sum b{font-weight:600}
+  .pending-sum .pbtn{margin-left:auto;padding:5px 12px;border-radius:8px;border:1px solid var(--green);
+    background:transparent;color:var(--green);font-size:12px;cursor:pointer}
   .cm-actions .btn{flex:1}
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
   .stat{background:var(--surface);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
@@ -498,6 +513,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <button class="btn add-child-btn" onclick="addChild()">＋ 添加孩子</button>
     </div>
     <div id="childrenList" data-page-node-id="q1bEDe2J9DunxbFWcAknKD"></div>
+    <p class="hint" data-page-node-id="childIdentHint">这里添加的孩子，会同时成为可登录的「孩子身份」：孩子在登录页点自己的名字就能进（免 PIN），打卡、上传、编辑会先提交给家长确认。</p>
     <input id="childAvatarInput" type="file" accept="image/*" style="display:none" onchange="onChildAvatarPick(event)">
 
     <!-- 登录与权限：角色登录 / 家长 PIN -->
@@ -512,16 +528,16 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
           <button class="btn primary sm" onclick="setParentPin()">🔐 设置 / 修改 PIN</button>
           <button class="btn ghost sm" onclick="clearParentPin()">🔓 关闭 PIN</button>
         </div>
-        <p class="hint">家长与托管老师登录、打卡、改作业需输入 4 位 PIN；孩子身份（哥哥 / 姐姐）只能查看，无需 PIN。</p>
-        <p class="hint"><b>PIN</b> = 本机登录码（只存哈希、不存明文），随家庭同步到家人设备；<b>家庭密码</b> = 加密数据的密钥，两者互不相同。</p>
+        <p class="hint">家长 / 老师登录需输入 4 位 PIN；<b>孩子登录免 PIN</b>，但打卡、上传、编辑会先提交给家长确认。</p>
+        <p class="hint"><b>PIN</b> = 家长登录码（只存哈希、不存明文），随家庭同步到家人设备；<b>家庭密码</b> = 加密数据的密钥，两者互不相同。</p>
       </div>
       <p id="authHint" class="hint" style="display:none;padding:10px 2px">创建或加入家庭后，即可在此登录角色。</p>
     </div>
 
     <!-- 家庭成员区块 -->
-    <div class="page-head" style="margin-top:22px"><h3 style="margin:0">👪 家庭成员</h3></div>
+    <div class="page-head" style="margin-top:22px"><h3 style="margin:0">👪 家长 / 老师</h3></div>
     <div id="parentRoster"></div>
-    <div id="parentHint" class="hint" style="padding:10px 2px;display:none">加入家庭并打开本页，你会自动登记为家庭成员并显示在这里；其他成员打开本页后也会显示。成员间互相可见，数据端到端加密。</div>
+    <div id="parentHint" class="hint" style="padding:10px 2px;display:none">加入家庭并登录后，你会自动登记为家庭成员显示在这里。孩子不在此列表——他们在上方「孩子信息」里管理。</div>
     <input id="parentAvatarInput" type="file" accept="image/*" style="display:none" onchange="onParentAvatarPick(event)" />
     <div class="sec">
       <h4>⚙️ 家庭设置</h4>
@@ -801,7 +817,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20261010.1';
+const APP_VERSION = '20261010.2';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -819,7 +835,9 @@ function setSubjects(arr){
   return uniq;
 }
 /* 家庭成员身份默认选项；同步/加入家庭时弹窗选择，也可选「自定义」（机构+称谓） */
-const IDENTITIES = ['爸爸','妈妈','爷爷','奶奶','外公','外婆','哥哥','姐姐','托管老师','自定义'];
+/* 家长 / 老师身份：登录需家长 PIN。孩子身份不在这里——孩子由「孩子档案」创建，登录免 PIN */
+const GUARDIAN_ROLES = ['爸爸','妈妈','爷爷','奶奶','外公','外婆','托管老师','自定义'];
+const IDENTITIES = GUARDIAN_ROLES;
 let stateData = { children:[], homework:[] };
 function loadChildren(){ return stateData.children; }
 function stampUpdated(a){ (a||[]).forEach(x=>{ if(x&&x.id) x.updatedAt=Date.now(); }); return a; }
@@ -1054,8 +1072,6 @@ async function decBlob(str, key){
 
 /* —— 角色登录（免注册：选角色即用；家长/托管老师用 PIN 控制）+ 家长 PIN —— */
 const LS_PIN='hw.pin', LS_SESSION='hw.session';
-const VIEW_ONLY_ROLES=['哥哥','姐姐'];                                   // 孩子身份：只能查看，不能打卡/改数据
-function isGuardRole(nick){ return !!nick && VIEW_ONLY_ROLES.indexOf(nick)<0; }  // 家长/托管老师/自定义＝可操作
 async function pinHash(pin, salt){
   const enc=new TextEncoder();
   const base=await crypto.subtle.importKey('raw', enc.encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
@@ -1068,13 +1084,22 @@ function getPin(){ try{ return JSON.parse(localStorage.getItem(LS_PIN))||null }c
 function setPin(o){ try{ localStorage.setItem(LS_PIN, JSON.stringify(o)); }catch(e){} }
 function clearPinStore(){ try{ localStorage.removeItem(LS_PIN); }catch(e){} }
 function pinEnabled(){ const p=getPin(); return !!(p&&p.hash); }
-/* 登录态：持久保存在本机，点「退出登录」才清除（不再有 5 分钟自动失效） */
+/* 登录态：持久保存在本机，点「退出登录」才清除。type: guard=家长/老师（操作立即生效）；child=孩子（操作需家长确认） */
 function getSession(){ try{ return JSON.parse(localStorage.getItem(LS_SESSION))||null }catch(e){ return null } }
 function setSession(o){ try{ localStorage.setItem(LS_SESSION, JSON.stringify(o)); }catch(e){} }
 function clearSession(){ try{ localStorage.removeItem(LS_SESSION); }catch(e){} }
-function currentSession(){ const s=getSession(); return (s&&s.nick)?s:null; }
+function currentSession(){
+  const s=getSession(); if(!s||!s.nick) return null;
+  if(!s.type) s.type='guard';        // 兼容旧版无 type 的登录数据
+  return s;
+}
 function isLoggedIn(){ return !!currentSession(); }
-function canOperate(){ const s=currentSession(); return !!(s && isGuardRole(s.nick)); }
+function isGuardSession(){ const s=currentSession(); return !!(s && s.type==='guard'); }
+function isChildSession(){ const s=currentSession(); return !!(s && s.type==='child'); }
+function myChild(){ const s=currentSession(); if(!s||s.type!=='child') return null; return loadChildren().find(c=>c.id===s.childId)||null; }
+function canOperate(){ return isGuardSession(); }
+/* 孩子是否处于「待家长确认」状态：孩子的操作照做，但会打待确认标记 */
+function isChildMode(){ return isChildSession(); }
 async function verifyPin(pin){ const p=getPin(); if(!p||!p.hash) return false; try{ return (await pinHash(pin, p.salt))===p.hash; }catch(e){ return false; } }
 
 /* —— 同步原语 —— */
@@ -1480,7 +1505,7 @@ async function leaveFamily(){
 }
 async function dissolveFamily(){
   const f=familyState(); if(!f||!f.familyId){ toast('当前没有已加入的家庭'); return; }
-  if(!(await requireAuth())) return;
+  if(!(await requireGuard())) return;
   if(!confirm('⚠️ 此操作不可恢复！\n将永久删除本家庭在云端的全部数据（作业、孩子、头像、设置），并从本机退出。\n仍要解散吗？')) return;
   const sb=getSupabase();
   try{ if(sb){ await sb.from('family_data').delete().eq('family_id', f.familyId); } }catch(e){ console.error('dissolveFamily cloud', e); }
@@ -1489,13 +1514,16 @@ async function dissolveFamily(){
   toast('本家庭云端数据已删除，正在退出…');
   setTimeout(()=>location.reload(), 800);
 }
-function buildShareLink(role){
+function buildShareLink(role, kind, cid){
   const f=familyState(); const c=cloudConfig()||{};
   // 用的是内置默认云配置时，不必把配置塞进链接（每台设备启动即内置），链接短一大截、二维码更稀疏好扫
   const isDefault = (!c.url || c.url===DEFAULT_CLOUD.url) && (!c.key || c.key===DEFAULT_CLOUD.key);
   const payload={ c:f.familyId, p:f.passphrase };
   if(!isDefault){ payload.u=c.url||''; payload.k=c.key||''; }
-  if(role) payload.r=String(role);           // 角色专属链接：点开自动成为该身份，无需再选
+  if(role){
+    payload.r=String(role);                  // 专属链接：点开自动成为该身份，无需再选
+    if(kind==='child'){ payload.rk='child'; if(cid) payload.rc=String(cid); }  // 孩子链接：免 PIN，登录后为「孩子模式」
+  }
   const enc=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
   return (location.origin+location.pathname)+'#join='+enc;
 }
@@ -1536,22 +1564,30 @@ function showRoleLinks(){
   if(!c.url||!c.key){ toast('请先在「云服务配置」填好 Supabase URL 与 Key'); return; }
   const box=document.getElementById('roleLinkList'); if(!box) return;
   const qrb=document.getElementById('roleLinkQr'); if(qrb){ qrb.style.display='none'; qrb.innerHTML=''; }
-  const list=IDENTITIES.filter(x=>x!=='自定义');
-  box.innerHTML=list.map(r=>'<div class="role-link-row"><span class="rl-name">'+esc(r)+'</span>'
-      + '<span class="rl-btns"><button class="btn ghost sm" onclick="copyRoleLink(\''+esc(r)+'\')">复制链接</button>'
-      + '<button class="btn ghost sm" onclick="showRoleQr(\''+esc(r)+'\')">二维码</button></span></div>').join('')
-    + '<div class="role-link-row"><span class="rl-name" style="color:var(--sub)">自定义…</span>'
+  const kids=loadChildren().filter(x=>!x.deletedAt && x.name);
+  const btns=(kind,nick,cid)=>'<span class="rl-btns">'
+      +'<button class="btn ghost sm" data-kind="'+kind+'" data-nick="'+esc(nick)+'" data-cid="'+esc(cid||'')+'" onclick="copyRoleLinkBtn(this)">复制链接</button>'
+      +'<button class="btn ghost sm" data-kind="'+kind+'" data-nick="'+esc(nick)+'" data-cid="'+esc(cid||'')+'" onclick="showRoleQrBtn(this)">二维码</button></span>';
+  let html='<div class="rl-sec">家长 / 老师<span>登录需家长 PIN</span></div>';
+  html+=GUARDIAN_ROLES.filter(x=>x!=='自定义').map(r=>'<div class="role-link-row"><span class="rl-name">'+esc(r)+'</span>'+btns('guard',r,'')+'</div>').join('');
+  html+='<div class="role-link-row"><span class="rl-name" style="color:var(--sub)">自定义…</span>'
       + '<span class="rl-btns"><button class="btn ghost sm" onclick="copyCustomRoleLink()">复制链接</button>'
       + '<button class="btn ghost sm" onclick="customRoleQr()">二维码</button></span></div>';
+  html+='<div class="rl-sec">孩子<span>免 PIN · 打卡与修改需家长确认</span></div>';
+  html+= kids.length
+      ? kids.map(k=>'<div class="role-link-row"><span class="rl-name">'+esc(k.name)+'</span>'+btns('child',k.name,k.id)+'</div>').join('')
+      : '<p class="hint" style="margin:2px 0 8px">还没有孩子档案。先到「孩子」页点「＋ 添加孩子」创建，再回来生成链接。</p>';
+  box.innerHTML=html;
   document.getElementById('roleLinkModal').classList.add('show');
 }
 /* 直接展示某角色的二维码：对方扫一下 → 打开就是该身份，不用复制链接 */
-function showRoleQr(role){
+function showRoleQr(role, kind, cid){
   const box=document.getElementById('roleLinkQr'); if(!box) return;
-  const link=buildShareLink(role);
+  const link=buildShareLink(role, kind, cid);
   let svg=''; try{ svg=genQR(link); }catch(e){ svg=''; }
   if(svg){
-    box.innerHTML='<div style="font-size:13px;color:var(--sub);margin-bottom:8px">「'+esc(role)+'」— 扫码打开即成为该身份</div>'
+    const tip = (kind==='child') ? '扫一下即进入孩子模式（免 PIN，打卡与修改需家长确认）' : '扫码打开即成为该身份';
+    box.innerHTML='<div style="font-size:13px;color:var(--sub);margin-bottom:8px">「'+esc(role)+'」— '+tip+'</div>'
       + svg + '<div class="hint" style="margin-top:6px">让对方用手机相机或微信扫这个码（链接含家庭密码，别发群里）</div>';
   } else {
     box.innerHTML='<div class="hint">二维码生成失败，请改用「复制链接」发给对方</div>';
@@ -1561,18 +1597,30 @@ function showRoleQr(role){
 async function customRoleQr(){
   const v=prompt('输入身份称谓（例如：舅舅、托管老师、阿姨）：','');
   if(!v || !v.trim()) return;
-  showRoleQr(v.trim());
+  showRoleQr(v.trim(), 'guard', '');
 }
 function closeRoleLinks(){ const m=document.getElementById('roleLinkModal'); if(m) m.classList.remove('show'); }
-async function copyRoleLink(role){
-  const link=buildShareLink(role);
+function copyRoleLinkBtn(el){
+  const kind=el.getAttribute('data-kind')||'guard';
+  const nick=el.getAttribute('data-nick')||'';
+  const cid=el.getAttribute('data-cid')||'';
+  copyRoleLink(nick, kind, cid);
+}
+function showRoleQrBtn(el){
+  const kind=el.getAttribute('data-kind')||'guard';
+  const nick=el.getAttribute('data-nick')||'';
+  const cid=el.getAttribute('data-cid')||'';
+  showRoleQr(nick, kind, cid);
+}
+async function copyRoleLink(role, kind, cid){
+  const link=buildShareLink(role, kind, cid);
   try{ await navigator.clipboard.writeText(link); toast('「'+role+'」的链接已复制，发给他点开即可'); }
   catch(e){ prompt('复制「'+role+'」的链接：', link); }
 }
 async function copyCustomRoleLink(){
   const v=prompt('输入身份称谓（例如：舅舅、托管老师、阿姨）：','');
   if(!v || !v.trim()) return;
-  await copyRoleLink(v.trim());
+  await copyRoleLink(v.trim(), 'guard', '');
 }
 /* —— 修改家庭密码（端到端加密下：密码即密钥，需重加密全家数据） —— */
 /* 统一的醒目链接展示区：同一时刻只显示一种链接，避免两个框同时出现、提示不清 */
@@ -1610,6 +1658,8 @@ async function joinFromLink(){
     localStorage.setItem(LS_CLOUD, JSON.stringify({url:payload.u, key:payload.k})); _sb=null;
   }
   const role=(payload.r||'').toString().trim();
+  const rkind=(payload.rk==='child')?'child':'guard';
+  const rcid=(payload.rc||'').toString();
   document.getElementById('joinFamCode').value=(payload.c||'').toUpperCase();
   document.getElementById('joinFamPass').value=(payload.p||'');
   switchTab('stats');
@@ -1619,6 +1669,7 @@ async function joinFromLink(){
       // 已是同一家庭同一密码：链接带角色且与当前身份不同 → 直接切换身份
       if(role && role!==(cur.member||'')){
         cur.memberPrev=cur.member||'我'; cur.member=role; setFamily(cur);
+        await doLogin(role, rkind, rcid);
         renderFamilyPanel();
         toast('身份已切换为「'+role+'」');
         await syncNow(); await pushMember(); await renderMembers();
@@ -1632,6 +1683,7 @@ async function joinFromLink(){
     }
     // 已加入其他家庭或密码不同：允许用链接覆盖身份（含正确密码），一键纠正
     setFamily({familyId:payload.c, familyName:'', passphrase:payload.p, member:role||cur.member||'我', memberPrev:cur.member||'我'});
+    if(role) await doLogin(role, rkind, rcid);
     renderFamilyPanel();
     toast('已用分享链接更新家庭身份（邀请码 '+payload.c+'）');
     await syncNow();
@@ -1641,7 +1693,7 @@ async function joinFromLink(){
   renderFamilyPanel();
   toast(role ? ('已加入家庭，你的身份：'+role) : ('已通过分享链接加入家庭（邀请码 '+payload.c+'）'));
   // 角色专属链接：直接以该身份登录（家长/托管老师会要求输入 PIN）
-  if(role && role!=='我') await doLogin(role);
+  if(role && role!=='我') await doLogin(role, rkind, rcid);
   // member 已由链接指定时，chooseIdentity 会自动跳过弹窗直接回调
   chooseIdentity(async ()=>{ await syncNow(); await pushMember(); await renderMembers(); });
   return true;
@@ -1882,12 +1934,49 @@ function renderHomework(){
     if(state.group==='date') return a<b?-1:1;
     return a.localeCompare(b,'zh');
   });
+  const plist=pendingList();
   let html='';
+  if(isGuardSession() && plist.length){
+    const who=[...new Set(plist.map(h=>(h.pending&&h.pending.by)||'孩子'))].join('、');
+    html+='<div class="pending-sum">⏳ <b>'+plist.length+' 项待确认</b>（'+esc(who)+' 提交）<button class="pbtn" onclick="confirmAllPending()">全部确认</button></div>';
+  } else if(isChildSession()){
+    const s=currentSession();
+    const mine=plist.filter(h=>h.pending && h.pending.childId===s.childId).length;
+    if(mine) html+='<div class="pending-sum" style="background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.45)">👦 你已提交 '+mine+' 项，等待家长确认</div>';
+  }
   keys.forEach(k=>{
     if(state.group!=='none') html+=`<div class="grp">${esc(k)} <span class="rate">${groups[k].length} 条</span></div>`;
     groups[k].forEach(h=>{ html+=cardHtml(h); });
   });
   box.innerHTML=html;
+}
+/* —— 孩子操作 → 待家长确认 —— */
+function pendingCount(){ return loadHomework().filter(h=>!h.deletedAt && h.pending).length; }
+function pendingList(){ return loadHomework().filter(h=>!h.deletedAt && h.pending); }
+function applyChildPending(h, summary){
+  const s=currentSession();
+  if(!s || s.type!=='child') return;          // 家长操作：立即生效，不留标记
+  h.pending={ by:s.nick, childId:s.childId||'', at:Date.now(), summary:summary||'修改了作业' };
+}
+async function confirmPending(id){
+  if(!(await requireGuard())) return;
+  const all=loadHomework(); const h=all.find(x=>x.id===id); if(!h) return;
+  const p=h.pending||{}; const by=p.by||'孩子';
+  if(!(await showConfirm(by+'提交的「'+(p.summary||'修改')+'」，确认吗？\n\n确认后这条标记会消失。'))) return;
+  delete h.pending;
+  saveHomework(all); renderAuthPanel(); renderPinBadge(); render();
+  toast('已确认');
+}
+async function confirmAllPending(){
+  if(!(await requireGuard())) return;
+  const list=pendingList();
+  if(!list.length){ toast('当前没有待确认的作业'); return; }
+  const names=[...new Set(list.map(h=>(h.pending&&h.pending.by)||'孩子'))].join('、');
+  if(!(await showConfirm('共 '+list.length+' 项待确认（'+names+' 提交），全部确认吗？'))) return;
+  const all=loadHomework(); let n=0;
+  all.forEach(h=>{ if(h.pending){ delete h.pending; n++; } });
+  saveHomework(all); renderAuthPanel(); renderPinBadge(); render();
+  toast('已确认 '+n+' 项');
 }
 function cardHtml(h){
   const cc=loadChildren().find(x=>x.id===h.childId);
@@ -1919,6 +2008,7 @@ function cardHtml(h){
         <span class="${overdue?'red':''}">截止：${esc(h.dueDate||'—')}</span>
         ${h.pageFrom?`<span>页码：${esc(h.pageFrom)}-${esc(h.pageTo)}</span>`:''}
       </div>
+      ${h.pending?`<div class="pending-bar">⏳ ${esc(h.pending.by||'孩子')}提交：${esc(h.pending.summary||'修改了作业')}<button class="pbtn" onclick="confirmPending('${h.id}')">确认</button></div>`:''}
     </div>
     <div class="card-mid">
       ${h.content?`<div class="content">${esc(h.content)}</div>`:''}
@@ -1933,8 +2023,18 @@ function cardHtml(h){
 }
 function fillChildFilter(all){
   const sel=document.getElementById('childFilter');
-  const cur=state.childFilter;
+  const s=currentSession();
   const cs=loadChildren().filter(c=>!c.deletedAt);
+  if(s && s.type==='child'){
+    // 孩子模式：只能看自己的作业，下拉锁死
+    const me=cs.find(c=>c.id===s.childId);
+    if(me){ sel.innerHTML='<option value="'+me.id+'">'+esc(me.name)+'</option>'; sel.value=me.id; state.childFilter=me.id; }
+    else { sel.innerHTML='<option value="all">全部孩子</option>'; sel.value='all'; state.childFilter='all'; }
+    sel.disabled=true;
+    return;
+  }
+  sel.disabled=false;
+  const cur=state.childFilter;
   sel.innerHTML=`<option value="all">全部孩子</option>`+cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   sel.value=cs.some(c=>c.id===cur)?cur:'all'; state.childFilter=sel.value;
 }
@@ -2141,7 +2241,7 @@ function onSeriesInput(){
 }
 
 async function openEdit(id){
-  if(!(await requireAuth())) return;
+  if(!(await requireLogin())) return;
   state.editing=id||null; state.draftImages=[];
   fillSubjectSelect(); fillChildSelect('eChild');
   document.getElementById('pasteBox').classList.remove('show');
@@ -2278,22 +2378,25 @@ function saveEdit(){
     uploader:'我'
   };
   const all=loadHomework();
+  const isChild=isChildSession();
   if(state.editing){
     const h=all.find(x=>x.id===state.editing);
     data.donePages=(h.donePages||[]).filter(p=>!hasPages(data)||(p>=Number(data.pageFrom)&&p<=Number(data.pageTo)));
     data.subtasks=h.subtasks||[];
     Object.assign(h,data); recalc(h);
-    saveHomework(all); toast('已更新');
+    if(isChild) applyChildPending(h,'编辑了作业');
+    saveHomework(all); toast(isChild?'已提交给家长确认':'已更新');
   } else {
     data.id=uid(); data.completed=(data.status==='done'); data.createTime=Date.now();
     data.donePages=[]; data.subtasks=[];
     data.uploader=(familyState()&&familyState().member)||'我';
-    all.unshift(data); saveHomework(all); toast('已添加');
+    if(isChild) applyChildPending(data,'上传了新作业');
+    all.unshift(data); saveHomework(all); toast(isChild?'已提交给家长确认':'已添加');
   }
   closeEdit(); render();
 }
 async function deleteEdit(){
-  if(!(await requireAuth())) return;
+  if(!(await requireGuard())) return;
   if(!confirm('确定删除这条作业？'))return;
   const all=loadHomework().map(x=>x.id===state.editing?Object.assign({},x,{deletedAt:Date.now()}):x);
   saveHomework(all); closeEdit(); render();
@@ -2349,73 +2452,95 @@ function pinKey(k){
 /* —— 角色登录：选身份 → 家长/托管老师输 PIN → 登录态写本机（退出才失效） —— */
 let __loginResolver=null;
 function openLogin(){
-  if(!joined()){ toast('请先创建或加入家庭，才能登录角色'); return Promise.resolve(false); }
+  if(!joined()){ toast('请先创建或加入家庭，才能登录'); return Promise.resolve(false); }
   const grid=document.getElementById('loginGrid');
   if(grid){
-    grid.innerHTML=IDENTITIES.map(o=>'<button type="button" class="id-opt" data-opt="'+o+'" onclick="selectLoginRole(\''+o+'\',this)">'+o+'</button>').join('');
+    grid.innerHTML=GUARDIAN_ROLES.map(o=>'<button type="button" class="id-opt" data-kind="guard" data-opt="'+o+'" onclick="selectLoginRole(this)">'+o+'</button>').join('');
     const cur=(familyState()&&familyState().member)||'';
-    if(cur && IDENTITIES.indexOf(cur)>=0){
+    if(cur && GUARDIAN_ROLES.indexOf(cur)>=0){
       const b=grid.querySelector('[data-opt="'+cur+'"]'); if(b) b.classList.add('selected');
     }
   }
+  const cg=document.getElementById('loginChildGrid');
+  const kids=loadChildren().filter(c=>!c.deletedAt && c.name);
+  if(cg){
+    cg.innerHTML=kids.map(c=>'<button type="button" class="id-opt" data-kind="child" data-cid="'+c.id+'" data-opt="'+esc(c.name)+'" onclick="selectLoginRole(this)">'+esc(c.name)+'</button>').join('');
+  }
+  const ch=document.getElementById('loginChildHint'); if(ch) ch.style.display=kids.length?'none':'block';
   const cw=document.getElementById('loginCustomWrap'); if(cw) cw.style.display='none';
   const lo=document.getElementById('loginOrg'); if(lo) lo.value='';
   const lt=document.getElementById('loginTitle'); if(lt) lt.value='';
   document.getElementById('loginModal').classList.add('show');
   return new Promise(res=>{ __loginResolver=res; });
 }
-function selectLoginRole(opt, btn){
-  document.querySelectorAll('#loginGrid .id-opt').forEach(b=>b.classList.remove('selected'));
+function selectLoginRole(btn){
+  document.querySelectorAll('#loginModal .id-opt').forEach(b=>b.classList.remove('selected'));
   if(btn) btn.classList.add('selected');
-  const cw=document.getElementById('loginCustomWrap'); if(cw) cw.style.display=(opt==='自定义')?'block':'none';
+  const isCustom = !!btn && btn.getAttribute('data-kind')==='guard' && btn.getAttribute('data-opt')==='自定义';
+  const cw=document.getElementById('loginCustomWrap'); if(cw) cw.style.display=isCustom?'block':'none';
 }
 function closeLogin(){
   const m=document.getElementById('loginModal'); if(m) m.classList.remove('show');
   const r=__loginResolver; __loginResolver=null; if(r) r(false);
 }
 async function confirmLogin(){
-  const sel=document.querySelector('#loginGrid .id-opt.selected');
-  let nick=sel?sel.getAttribute('data-opt'):'';
-  if(nick==='自定义'){
+  const sel=document.querySelector('#loginModal .id-opt.selected');
+  if(!sel){ toast('请选择身份'); return; }
+  const kind=sel.getAttribute('data-kind')||'guard';
+  const cid=sel.getAttribute('data-cid')||'';
+  let nick=sel.getAttribute('data-opt')||'';
+  if(kind==='guard' && nick==='自定义'){
     const oe=document.getElementById('loginOrg'), te=document.getElementById('loginTitle');
     const o=((oe&&oe.value)||'').trim(), t=((te&&te.value)||'').trim();
     if(!o && !t){ toast('请填写机构或称谓'); return; }
     nick=((o?o+' ':'')+t).trim();
   }
-  if(!nick){ toast('请选择角色'); return; }
+  if(!nick){ toast('请选择身份'); return; }
   const m=document.getElementById('loginModal'); if(m) m.classList.remove('show');
   const r=__loginResolver; __loginResolver=null;
-  const ok=await doLogin(nick);
+  const ok=await doLogin(nick, kind, cid);
   if(r) r(ok);
 }
-async function doLogin(nick){
-  if(isGuardRole(nick) && pinEnabled()){
-    const v=await askPin('🔒 登录验证','以「'+nick+'」身份登录，请输入家长 PIN','verify');
+async function doLogin(nick, kind, cid){
+  kind = kind || 'guard';
+  if(kind==='guard' && pinEnabled()){
+    const v=await askPin('🔒 家长登录','以「'+nick+'」身份登录，请输入家长 PIN','verify');
     if(!v){ toast('PIN 不正确，登录已取消'); return false; }
   }
   const f=familyState();
   if(f){ f.member=nick; setFamily(f); }
-  setSession({nick:nick, at:Date.now()});
-  renderAuthPanel(); renderPinBadge();
-  toast(isGuardRole(nick)? ('已登录为 '+nick+'，可打卡与修改') : ('已登录为 '+nick+'（仅查看）'));
+  setSession({ type:kind, nick:nick, childId:cid||'', at:Date.now() });
+  if(kind==='child' && cid){ state.childFilter=cid; }   // 孩子登录后只看自己的作业
+  renderAuthPanel(); renderPinBadge(); render();
+  toast(kind==='guard' ? ('已登录为 '+nick+'（家长模式 · 操作立即生效）')
+                       : ('已登录为 '+nick+'（孩子模式 · 打卡与修改需家长确认）'));
   try{ await pushMember(); await renderMembers(); }catch(e){}
   return true;
 }
 async function logout(){
   const s=currentSession();
   if(!s){ toast('当前未登录'); return; }
-  if(!(await showConfirm('退出后本机只能查看作业，不能打卡或修改。\n\n确定退出「'+s.nick+'」的登录吗？'))) return;
+  const label = s.type==='child' ? '孩子模式' : '家长模式';
+  if(!(await showConfirm('退出后会回到「访客模式」，只能查看作业，不能打卡或修改。\n\n确定退出「'+s.nick+'」（'+label+'）吗？'))) return;
   clearSession();
-  renderAuthPanel(); renderPinBadge();
+  state.childFilter='all';
+  renderAuthPanel(); renderPinBadge(); render();
   toast('已退出登录，现在只能查看');
 }
-/* 需要家长 / 托管老师权限时调用：已登录的可操作角色→放行；未登录→先走登录 */
-async function requireAuth(){
+/* 家长操作前调用：已登录家长→放行；未登录→先走登录；孩子身份→拒绝并提示 */
+async function requireGuard(){
   if(!joined()) return true;                       // 未加入家庭：单机模式不限制
   const s=currentSession();
-  if(!s){ const ok=await openLogin(); return ok && canOperate(); }
-  if(!isGuardRole(s.nick)){ toast('「'+s.nick+'」是查看身份，不能打卡或修改作业'); return false; }
+  if(!s){ const ok=await openLogin(); return ok && isGuardSession(); }
+  if(s.type!=='guard'){ toast('这是家长操作，请先切换到家长身份'); return false; }
   return true;
+}
+/* 打卡 / 上传 / 编辑作业前的判断：家长与孩子都可以做（孩子做了会打「待家长确认」标记），访客需先登录 */
+async function requireLogin(){
+  if(!joined()) return true;
+  if(isLoggedIn()) return true;
+  const ok=await openLogin();
+  return ok && isLoggedIn();
 }
 /* 家庭页「登录与权限」区块渲染 */
 function renderAuthPanel(){
@@ -2424,31 +2549,38 @@ function renderAuthPanel(){
   const pinBox=document.getElementById('pinBox');
   const hint=document.getElementById('authHint');
   const isJoined=joined();
-  if(pinBox) pinBox.style.display = isJoined?'block':'none';
   if(hint) hint.style.display = isJoined?'none':'block';
   if(acts) acts.style.display = isJoined?'flex':'none';
-  if(!isJoined){ box.innerHTML='<p class="hint">未加入家庭：单机使用，无需登录。</p>'; return; }
+  if(!isJoined){
+    if(pinBox) pinBox.style.display='none';
+    box.innerHTML='<p class="hint">未加入家庭：单机使用，无需登录。</p>';
+    renderPinSettings(); return;
+  }
   const s=currentSession();
+  if(pinBox) pinBox.style.display = (s && s.type==='guard')?'block':'none';
   if(s){
-    const guard=isGuardRole(s.nick);
+    const guard=(s.type==='guard');
+    const pend=guard?pendingCount():0;
     box.innerHTML='<div class="fam-card" style="margin:0">'
       +'<div class="fam-meta"><div class="fam-line"><div class="fam-line-main">'
       +'<span class="fam-label">当前登录：</span><span class="fam-val">'+esc(s.nick)+'</span>'
-      +'<span class="pill series" style="margin-left:6px;background:'+(guard?'rgba(34,197,94,.14)':'var(--soft)')+';color:'+(guard?'var(--green)':'var(--sub)')+'">'
-      +(guard?'可打卡 · 可修改':'仅查看')+'</span>'
-      +'</div></div><div class="hint" style="margin-top:4px">登录时间 '+fmtActive(s.at)+'；退出后本机只能查看</div></div></div>';
-    if(acts) acts.innerHTML='<button class="btn ghost sm" onclick="openLogin()">切换角色</button>'
+      +'<span class="pill series" style="margin-left:6px;background:'+(guard?'rgba(34,197,94,.14)':'rgba(59,130,246,.14)')+';color:'+(guard?'var(--green)':'var(--blue)')+'">'
+      +(guard?'家长模式 · 立即生效':'孩子模式 · 需家长确认')+'</span>'
+      +'</div></div><div class="hint" style="margin-top:4px">登录时间 '+fmtActive(s.at)
+      + (guard ? (pend?('　⏳ 有 '+pend+' 项孩子提交待你确认'):'') : '　你的打卡与修改会提交给家长确认')
+      +'</div></div></div>';
+    if(acts) acts.innerHTML='<button class="btn ghost sm" onclick="openLogin()">切换身份</button>'
       +'<button class="btn danger sm" onclick="logout()">退出登录</button>';
   } else {
-    box.innerHTML='<p class="hint" style="color:var(--orange)">当前未登录：只能查看作业，不能打卡或修改。点下方按钮选择角色登录。</p>';
-    if(acts) acts.innerHTML='<button class="btn primary sm" onclick="openLogin()">🔑 选择角色登录</button>';
+    box.innerHTML='<p class="hint" style="color:var(--orange)">访客模式：只能查看作业。<b>家长登录</b>后打卡修改立即生效；<b>孩子登录</b>后也能打卡上传，但需家长确认。</p>';
+    if(acts) acts.innerHTML='<button class="btn primary sm" onclick="openLogin()">🔑 登录（家长 / 孩子）</button>';
   }
   renderPinSettings();
 }
 /* 设置 / 修改 / 关闭 家长 PIN */
 async function setParentPin(){
   if(!joined()){ toast('请先创建或加入家庭，PIN 才能同步给家人'); return; }
-  if(!(await requireAuth())) return;
+  if(!(await requireGuard())) return;
   const needOld=pinEnabled();
   if(needOld){
     const old=await askPin('🔒 验证当前 PIN','修改 PIN 前请先输入当前的 4 位 PIN','verify');
@@ -2467,7 +2599,7 @@ async function setParentPin(){
 }
 async function clearParentPin(){
   if(!pinEnabled()){ toast('当前未设置家长 PIN'); return; }
-  if(!(await requireAuth())) return;
+  if(!(await requireGuard())) return;
   const old=await askPin('🔒 验证当前 PIN','关闭前请先输入当前的 4 位 PIN','verify');
   if(!old) return;
   if(!(await showConfirm('关闭后，任何人打开这台设备都能直接打卡。确定关闭吗？'))) return;
@@ -2478,22 +2610,23 @@ async function clearParentPin(){
 }
 function renderPinSettings(){
   const box=document.getElementById('pinState'); if(!box) return;
-  if(pinEnabled()) box.innerHTML='<span style="color:var(--green)">已开启</span>（打卡需输入 PIN）';
-  else box.innerHTML='<span style="color:var(--sub)">未开启</span>（任何人都能打卡）';
+  if(pinEnabled()) box.innerHTML='<span style="color:var(--green)">已开启</span>（家长登录需 PIN）';
+  else box.innerHTML='<span style="color:var(--sub)">未开启</span>（家长登录免 PIN，建议开启）';
 }
 function renderPinBadge(){
   const b=document.getElementById('pinBadge'); if(!b) return;
   if(!joined()){ b.hidden=true; return; }
   b.hidden=false;
   const s=currentSession();
-  if(!s){ b.className='pin-badge'; b.textContent='🔒 未登录 · 点击登录'; }
-  else if(isGuardRole(s.nick)){ b.className='pin-badge open'; b.textContent='🔓 '+s.nick+' 已登录 · 点击退出'; }
-  else { b.className='pin-badge'; b.textContent='👀 '+s.nick+'（仅查看）'; }
+  const pend=pendingCount();
+  if(!s){ b.className='pin-badge'; b.textContent = pend? ('⏳ 有 '+pend+' 项待确认 · 点击登录') : '🔒 未登录 · 点击登录'; }
+  else if(s.type==='guard'){ b.className='pin-badge open'; b.textContent = (pend?('⏳ '+pend+' 项待确认 · '):'🔓 ')+s.nick+' · 点击退出'; }
+  else { b.className='pin-badge'; b.textContent = '👦 '+s.nick+'（孩子）· 点击退出'; }
 }
 function onPinBadgeClick(){
   if(!joined()) return;
   const s=currentSession();
-  if(s && isGuardRole(s.nick)) logout();
+  if(s) logout();
   else openLogin();
 }
 function celebrate(type, opts){
@@ -2530,7 +2663,7 @@ async function supportAuthor(){
 }
 async function toggleComplete(id){
   const all=loadHomework(); const h=all.find(x=>x.id===id); if(!h)return;
-  if(!(await requireAuth())) return;
+  if(!(await requireLogin())) return;
   if(isFullyDone(h)){
     if(!(await showConfirm('确定要把该作业标记为未完成吗？'))) return;
     // 取消打卡：恢复为未打卡（清空页码/子任务勾选，界面与按钮同步更新）
@@ -2544,10 +2677,11 @@ async function toggleComplete(id){
     h.completed=true; h.status='done'; h.completedAt=Date.now();
     celebrate('full');
   }
+  applyChildPending(h, h.completed?'打卡：标记为全部完成':'打卡：取消完成');
   saveHomework(all); render();
 }
 function getH(id){ return loadHomework().find(x=>x.id===id) }
-function mutate(id,fn){ const all=loadHomework(); const h=all.find(x=>x.id===id); if(h){fn(h);} saveHomework(all); }
+function mutate(id,fn,summary){ const all=loadHomework(); const h=all.find(x=>x.id===id); if(h){ fn(h); if(summary) applyChildPending(h, summary); } saveHomework(all); }
 function renderCheckBody(){
   const h=getH(window.__chk); if(!h)return;
   let pageHtml='';
@@ -2565,7 +2699,7 @@ function renderCheckBody(){
 }
 async function openCheck(id){
   const h=getH(id); if(!h)return;
-  if(!(await requireAuth())) return;
+  if(!(await requireLogin())) return;
   window.__chk=id; window.__chkDirty=false; window.__chkCompleted=false; window.__chkUncompleted=false;
   renderCheckBody();
   document.getElementById('checkModal').classList.add('show');
@@ -2584,22 +2718,22 @@ function togglePage(p){
   const wasOn=(h.donePages||[]).includes(p);
   window.__chkDirty=true;
   if(wasOn) window.__chkUncompleted=true; else window.__chkCompleted=true;
-  mutate(window.__chk, hx=>{ hx.donePages=hx.donePages||[]; const i=hx.donePages.indexOf(p); if(i>=0)hx.donePages.splice(i,1); else hx.donePages.push(p); recalc(hx); });
+  mutate(window.__chk, hx=>{ hx.donePages=hx.donePages||[]; const i=hx.donePages.indexOf(p); if(i>=0)hx.donePages.splice(i,1); else hx.donePages.push(p); recalc(hx); }, (wasOn?('取消第 '+p+' 页'):('勾选第 '+p+' 页完成')));
   renderCheckBody(); render();
 }
-function addSub(){ const v=document.getElementById('newSub').value.trim(); if(!v)return; window.__chkDirty=true; mutate(window.__chk, h=>{ h.subtasks=h.subtasks||[]; h.subtasks.push({text:v,done:false}); recalc(h); }); document.getElementById('newSub').value=''; renderCheckBody(); render(); }
+function addSub(){ const v=document.getElementById('newSub').value.trim(); if(!v)return; window.__chkDirty=true; mutate(window.__chk, h=>{ h.subtasks=h.subtasks||[]; h.subtasks.push({text:v,done:false}); recalc(h); }, '添加子任务：'+v); document.getElementById('newSub').value=''; renderCheckBody(); render(); }
 function toggleSub(i){
   const h=getH(window.__chk); if(!h||!h.subtasks[i])return;
   const was=h.subtasks[i].done;
   window.__chkDirty=true;
   if(was) window.__chkUncompleted=true; else window.__chkCompleted=true;
-  mutate(window.__chk, hx=>{ if(hx.subtasks[i]){hx.subtasks[i].done=!hx.subtasks[i].done; recalc(hx);} });
+  mutate(window.__chk, hx=>{ if(hx.subtasks[i]){hx.subtasks[i].done=!hx.subtasks[i].done; recalc(hx);} }, (was?('取消子任务：'+h.subtasks[i].text):('完成子任务：'+h.subtasks[i].text)));
   renderCheckBody(); render();
 }
-function delSub(i){ window.__chkDirty=true; mutate(window.__chk, h=>{ if(h.subtasks)h.subtasks.splice(i,1); recalc(h); }); renderCheckBody(); render(); }
+function delSub(i){ window.__chkDirty=true; mutate(window.__chk, h=>{ if(h.subtasks)h.subtasks.splice(i,1); recalc(h); }, '删除子任务'); renderCheckBody(); render(); }
 async function checkAll(done){
   if(done && !(await showConfirm('确定将该作业标记为全部完成？'))) return;
-  mutate(window.__chk, h=>{ if(done){ if(hasPages(h)){ const lo=Number(h.pageFrom),hi=Number(h.pageTo); h.donePages=[]; for(let p=lo;p<=hi;p++)h.donePages.push(p);} if(h.subtasks&&h.subtasks.length)h.subtasks.forEach(t=>t.done=true); h.completed=true; h.status='done'; h.completedAt=Date.now(); window.__chkDirty=true; window.__chkCompleted=true; } else { h.donePages=[]; if(h.subtasks)h.subtasks.forEach(t=>t.done=false); h.completed=false; h.completedAt=null; if(h.status==='done')h.status='todo'; window.__chkDirty=true; window.__chkUncompleted=true; } }); closeCheck(); render();
+  mutate(window.__chk, h=>{ if(done){ if(hasPages(h)){ const lo=Number(h.pageFrom),hi=Number(h.pageTo); h.donePages=[]; for(let p=lo;p<=hi;p++)h.donePages.push(p);} if(h.subtasks&&h.subtasks.length)h.subtasks.forEach(t=>t.done=true); h.completed=true; h.status='done'; h.completedAt=Date.now(); window.__chkDirty=true; window.__chkCompleted=true; } else { h.donePages=[]; if(h.subtasks)h.subtasks.forEach(t=>t.done=false); h.completed=false; h.completedAt=null; if(h.status==='done')h.status='todo'; window.__chkDirty=true; window.__chkUncompleted=true; } }, (done?'打卡：全部勾选完成':'打卡：取消全部打卡')); closeCheck(); render();
 }
 function preview(i,id){
   const h=loadHomework().find(x=>x.id===id);
@@ -2633,7 +2767,7 @@ function onChildAvatarPick(e){
 }
 function clearDraftAvatar(){ if(editingChildDraft){ editingChildDraft.avatar=''; renderChildren(); } }
 async function addChild(){
-  if(!(await requireAuth())) return;
+  if(!(await requireGuard())) return;
   const nc={id:uid(),name:'',grade:'',avatar:''};
   const cs=loadChildren(); cs.push(nc); saveChildren(cs);
   editingChildId=nc.id; editingChildIsNew=true; editingChildDraft={name:'',grade:'',avatar:''};
@@ -2794,17 +2928,20 @@ function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k))||[] }catch(e
   </div>
 </div>
 
-<!-- 角色登录（家长/托管老师需 PIN；孩子身份仅查看） -->
+<!-- 登录：家长/老师需 PIN（操作立即生效）；孩子免 PIN（操作需家长确认） -->
 <div class="modal" id="loginModal" onclick="if(event.target===this)closeLogin()">
   <div class="sheet">
-    <div class="sheet-head"><span class="h-title">🔑 选择角色登录</span><button class="x" onclick="closeLogin()">✕</button></div>
+    <div class="sheet-head"><span class="h-title">🔑 登录</span><button class="x" onclick="closeLogin()">✕</button></div>
     <div class="sheet-body">
-      <p class="hint">选择你在这个家庭的身份。<b>家长与托管老师</b>可打卡、改作业（需 PIN）；<b>哥哥 / 姐姐</b>是孩子身份，只能查看。</p>
+      <div class="login-sec"><b>我是家长 / 老师</b><span>需家长 PIN · 操作立即生效</span></div>
       <div class="id-grid" id="loginGrid"></div>
       <div class="field" id="loginCustomWrap" style="display:none;margin-top:12px">
         <label>机构</label><input id="loginOrg" placeholder="如 实验小学" />
         <label style="display:block;margin-top:8px">称谓</label><input id="loginTitle" placeholder="如 王老师" />
       </div>
+      <div class="login-sec child"><b>我是孩子</b><span>免 PIN · 打卡与修改需家长确认</span></div>
+      <div class="id-grid" id="loginChildGrid"></div>
+      <p class="hint" id="loginChildHint" style="display:none">还没有孩子档案。请家长先在「孩子」页点「＋ 添加孩子」创建。</p>
     </div>
     <div class="sheet-foot">
       <button class="btn ghost" onclick="closeLogin()">取消</button>
@@ -2818,7 +2955,7 @@ function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k))||[] }catch(e
   <div class="sheet">
     <div class="sheet-head"><span class="h-title">你在家庭的身份</span><button class="x" onclick="closeIdentity()">✕</button></div>
     <div class="sheet-body">
-      <p class="hint">请选择你在这个家庭的身份，其他成员会在「家庭成员」列表里看到。</p>
+      <p class="hint">请选择你作为<b>家长 / 老师</b>的身份。孩子不在这里选——请到「孩子」页添加孩子档案。</p>
       <div class="id-grid" id="idGrid"></div>
       <div class="field" id="idCustomWrap" style="display:none;margin-top:12px">
         <label>机构</label><input id="idOrg" placeholder="如 实验小学" />
