@@ -563,7 +563,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
           <button class="btn ghost sm" onclick="syncNow()" data-page-node-id="rP7oJ4cTeJMGKz4hwxQPeX">立即同步</button>
           <button class="btn ghost sm" onclick="leaveFamily()" data-page-node-id="aw3vUtVoACDcItpZM8N3C1">退出家庭</button>
           <button class="btn primary sm" onclick="shareFamily()" data-page-node-id="UH6SXoygxEfUh7bI9PQLiz">🔗 分享家庭</button>
-          <button class="btn ghost sm" onclick="showRoleLinks()" data-page-node-id="rL8kQ2nVbX4mZ7wE9tYcJ3">👤 角色专属链接</button>
+          <button class="btn ghost sm" id="roleLinksBtn" onclick="showRoleLinks()" data-page-node-id="rL8kQ2nVbX4mZ7wE9tYcJ3">👤 角色专属链接</button>
         </div>
         <div style="margin-top:10px">
           <button class="btn danger" style="width:100%" onclick="dissolveFamily()" data-page-node-id="dJ8kXqLz9mN2pQr4vW6yT1">🗑️ 解散本家庭（删除云端全部数据）</button>
@@ -825,7 +825,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20261010.5';
+const APP_VERSION = '20261010.6';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1492,6 +1492,9 @@ function renderFamilyPanel(){
   if(fnWrap) fnWrap.style.display = hasName ? 'none' : 'block';
   const canEditHome = isOwnerSession();
   if(fnBtn) fnBtn.style.display = (hasName && canEditHome) ? 'inline-block' : 'none';
+  // 「角色专属链接」含家庭密码：只有家长 / 老师登录时才显示（孩子登录或未登录一律隐藏）
+  const roleBtn=document.getElementById('roleLinksBtn');
+  if(roleBtn) roleBtn.style.display = isGuardSession() ? '' : 'none';
 
   const famInitial = (f&&f.familyName&&f.familyName.trim())? f.familyName.trim().charAt(0) : '';
   const faw=document.getElementById('familyAvatarWrap');
@@ -1662,6 +1665,7 @@ async function shareFamily(){
 /* —— 角色专属链接：每人一条，点开自动成为该身份 —— */
 function showRoleLinks(){
   if(!joined()){ toast('请先创建或加入家庭'); return; }
+  if(!isGuardSession()){ toast('请先用「家长 / 老师」身份登录，才能生成专属链接'); return; }
   const c=cloudConfig()||{};
   if(!c.url||!c.key){ toast('请先在「云服务配置」填好 Supabase URL 与 Key'); return; }
   const box=document.getElementById('roleLinkList'); if(!box) return;
