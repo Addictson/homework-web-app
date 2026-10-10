@@ -817,7 +817,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20261010.2';
+const APP_VERSION = '20261010.3';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1494,6 +1494,7 @@ function saveFamilyName(){
   if(v) toast('家庭名称已更新并同步'); else toast('已清除家庭名称');
 }
 async function leaveFamily(){
+  if(!(await requireGuard())) return;
   if(!confirm('退出家庭会保留本机数据，但不再与家庭云同步，确定？'))return;
   const f=familyState();
   if(f && f.familyId){
@@ -2248,7 +2249,7 @@ async function openEdit(id){
   if(id){
     const h=loadHomework().find(x=>x.id===id); if(!h)return;
     document.getElementById('editTitle').textContent='编辑作业';
-    document.getElementById('eDelete').style.display='inline-block';
+    document.getElementById('eDelete').style.display = isChildSession() ? 'none' : 'inline-block';
     document.getElementById('eChild').value=h.childId;
     document.getElementById('eSubject').value=h.subject||'其他';
     document.getElementById('eContent').value=h.content||'';
