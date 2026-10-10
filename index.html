@@ -202,6 +202,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .role-link-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
   .role-link-row:last-child{border-bottom:none}
   .rl-name{font-size:14px;color:var(--ink)}
+  .rl-btns{display:flex;gap:6px;flex-shrink:0}
+  #roleLinkQr svg{max-width:220px;height:auto}
   .cm-actions .btn{flex:1}
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
   .stat{background:var(--surface);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
@@ -771,6 +773,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <div class="cm-title">👤 角色专属链接</div>
     <div class="cm-msg">给每个人发他自己的链接，点开就自动是这个身份，不用再选。链接含家庭密码，别发到群里。</div>
     <div id="roleLinkList" style="max-height:46vh;overflow:auto;margin-bottom:14px"></div>
+    <div id="roleLinkQr" style="display:none;text-align:center;margin-bottom:14px"></div>
     <div class="cm-actions"><button class="btn ghost" onclick="closeRoleLinks()">关闭</button></div>
   </div>
 </div>
@@ -788,7 +791,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20261009.2';
+const APP_VERSION = '20261009.3';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -1470,7 +1473,10 @@ async function dissolveFamily(){
 }
 function buildShareLink(role){
   const f=familyState(); const c=cloudConfig()||{};
-  const payload={u:c.url||'', k:c.key||'', c:f.familyId, p:f.passphrase};
+  // 用的是内置默认云配置时，不必把配置塞进链接（每台设备启动即内置），链接短一大截、二维码更稀疏好扫
+  const isDefault = (!c.url || c.url===DEFAULT_CLOUD.url) && (!c.key || c.key===DEFAULT_CLOUD.key);
+  const payload={ c:f.familyId, p:f.passphrase };
+  if(!isDefault){ payload.u=c.url||''; payload.k=c.key||''; }
   if(role) payload.r=String(role);           // 角色专属链接：点开自动成为该身份，无需再选
   const enc=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
   return (location.origin+location.pathname)+'#join='+enc;
@@ -1511,10 +1517,33 @@ function showRoleLinks(){
   const c=cloudConfig()||{};
   if(!c.url||!c.key){ toast('请先在「云服务配置」填好 Supabase URL 与 Key'); return; }
   const box=document.getElementById('roleLinkList'); if(!box) return;
+  const qrb=document.getElementById('roleLinkQr'); if(qrb){ qrb.style.display='none'; qrb.innerHTML=''; }
   const list=IDENTITIES.filter(x=>x!=='自定义');
-  box.innerHTML=list.map(r=>'<div class="role-link-row"><span class="rl-name">'+esc(r)+'</span><button class="btn ghost sm" onclick="copyRoleLink(\''+esc(r)+'\')">复制链接</button></div>').join('')
-    + '<div class="role-link-row"><span class="rl-name" style="color:var(--sub)">自定义…</span><button class="btn ghost sm" onclick="copyCustomRoleLink()">填写后复制</button></div>';
+  box.innerHTML=list.map(r=>'<div class="role-link-row"><span class="rl-name">'+esc(r)+'</span>'
+      + '<span class="rl-btns"><button class="btn ghost sm" onclick="copyRoleLink(\''+esc(r)+'\')">复制链接</button>'
+      + '<button class="btn ghost sm" onclick="showRoleQr(\''+esc(r)+'\')">二维码</button></span></div>').join('')
+    + '<div class="role-link-row"><span class="rl-name" style="color:var(--sub)">自定义…</span>'
+      + '<span class="rl-btns"><button class="btn ghost sm" onclick="copyCustomRoleLink()">复制链接</button>'
+      + '<button class="btn ghost sm" onclick="customRoleQr()">二维码</button></span></div>';
   document.getElementById('roleLinkModal').classList.add('show');
+}
+/* 直接展示某角色的二维码：对方扫一下 → 打开就是该身份，不用复制链接 */
+function showRoleQr(role){
+  const box=document.getElementById('roleLinkQr'); if(!box) return;
+  const link=buildShareLink(role);
+  let svg=''; try{ svg=genQR(link); }catch(e){ svg=''; }
+  if(svg){
+    box.innerHTML='<div style="font-size:13px;color:var(--sub);margin-bottom:8px">「'+esc(role)+'」— 扫码打开即成为该身份</div>'
+      + svg + '<div class="hint" style="margin-top:6px">让对方用手机相机或微信扫这个码（链接含家庭密码，别发群里）</div>';
+  } else {
+    box.innerHTML='<div class="hint">二维码生成失败，请改用「复制链接」发给对方</div>';
+  }
+  box.style.display='block';
+}
+async function customRoleQr(){
+  const v=prompt('输入身份称谓（例如：舅舅、托管老师、阿姨）：','');
+  if(!v || !v.trim()) return;
+  showRoleQr(v.trim());
 }
 function closeRoleLinks(){ const m=document.getElementById('roleLinkModal'); if(m) m.classList.remove('show'); }
 async function copyRoleLink(role){
