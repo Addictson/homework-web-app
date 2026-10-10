@@ -189,6 +189,16 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .cm-title{font-size:17px;font-weight:700;margin-bottom:2px;color:var(--ink)}
   .cm-msg{font-size:15px;color:var(--ink);margin:12px 2px 18px;line-height:1.6}
   .cm-actions{display:flex;gap:10px}
+  /* 家长 PIN 数字键盘 */
+  .pin-dots{display:flex;justify-content:center;gap:12px;margin:16px 0 14px}
+  .pin-dot{width:14px;height:14px;border-radius:50%;background:transparent;border:1.5px solid var(--line);display:block}
+  .pin-dot.on{background:var(--blue);border-color:var(--blue)}
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+  .pin-pad button{min-height:48px;font-size:20px;font-weight:600;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--ink);cursor:pointer}
+  .pin-pad button:active{background:var(--blue);color:#fff}
+  .pin-pad button.ph{visibility:hidden}
+  .pin-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;border:1px solid var(--line);background:var(--soft);color:var(--sub);cursor:pointer}
+  .pin-badge.open{color:var(--green);border-color:var(--green)}
   .cm-actions .btn{flex:1}
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
   .stat{background:var(--surface);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
@@ -444,7 +454,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   <!-- 作业视图 -->
   <section id="homeworkView" data-page-node-id="3tqxU0y3MBSkiHLUg7rpRb">
     <div class="page-head">
-      <h3 style="margin:0">📚 作业</h3>
+      <h3 style="margin:0">📚 作业<span id="pinBadge" class="pin-badge" hidden onclick="onPinBadgeClick()" style="margin-left:8px;vertical-align:middle"></span></h3>
       <button class="btn add-hw-btn" onclick="openEdit()">＋ 添加作业</button>
     </div>
     <div class="toolbar" data-page-node-id="shvAC60qy2tg322U6n0DLd">
@@ -572,6 +582,14 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <button class="btn ghost sm" onclick="importData()" data-page-node-id="f93H98Xd2Gp1Ozn0YNLmoT">导入备份</button>
       <button class="btn danger sm" onclick="clearAll()" data-page-node-id="inw9GZfIOAiJYVSDHRLXd1">清空全部数据</button>
       <p class="hint" data-page-node-id="pIiBXqIfuX5yXwJ1FcMgXU">数据仅保存在本机浏览器(localStorage)，换设备/清缓存会丢失，请定期导出备份。</p>
+    </div>
+    <div class="sec">
+      <h4>家长 PIN（打卡锁）</h4>
+      <p class="hint">当前状态：<span id="pinState"></span></p>
+      <button class="btn primary sm" onclick="setParentPin()">🔐 设置 / 修改 PIN</button>
+      <button class="btn ghost sm" onclick="clearParentPin()">🔓 关闭 PIN</button>
+      <p class="hint">开启后：看作业、翻作业不用密码；但<b>打卡、改完成状态必须输入 4 位 PIN</b>。全家（含托管班老师）共用同一个码，设置后自动同步到所有家人设备。</p>
+      <p class="hint">PIN 只存在本机（且只存加密后的哈希，不存明文），换设备后随家庭同步自动带过来。忘记 PIN：让家里已解锁的设备重新设一个即可。</p>
     </div>
     <div class="sec">
       <h4>云端同步设置（Supabase）</h4>
@@ -719,6 +737,31 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   </div>
 </div>
 
+<div class="modal" id="pinModal" onclick="if(event.target===this)resolvePin('')">
+  <div class="sheet" style="max-width:320px">
+    <div class="cm-title" id="pinTitle" style="text-align:center">🔒 家长 PIN</div>
+    <div class="cm-msg" id="pinMsg" style="text-align:center">打卡需家长确认，请输入 4 位 PIN</div>
+    <div class="pin-dots" id="pinDots"><i class="pin-dot"></i><i class="pin-dot"></i><i class="pin-dot"></i><i class="pin-dot"></i></div>
+    <div class="pin-pad">
+      <button type="button" onclick="pinKey('1')">1</button>
+      <button type="button" onclick="pinKey('2')">2</button>
+      <button type="button" onclick="pinKey('3')">3</button>
+      <button type="button" onclick="pinKey('4')">4</button>
+      <button type="button" onclick="pinKey('5')">5</button>
+      <button type="button" onclick="pinKey('6')">6</button>
+      <button type="button" onclick="pinKey('7')">7</button>
+      <button type="button" onclick="pinKey('8')">8</button>
+      <button type="button" onclick="pinKey('9')">9</button>
+      <button type="button" class="ph" aria-hidden="true"></button>
+      <button type="button" onclick="pinKey('0')">0</button>
+      <button type="button" onclick="pinKey('del')">⌫</button>
+    </div>
+    <div class="cm-actions">
+      <button class="btn ghost" onclick="resolvePin('')">取消</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal img-modal" id="imgModal" onclick="if(event.target===this)closeImg()">
   <div class="img-wrap">
     <img id="imgModalImg" src="" alt="预览">
@@ -732,7 +775,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 /* ============ 存储层 ============ */
 const LS_C = 'hw.children', LS_H = 'hw.homework', LS_CLOUD = 'hw.cloud', LS_FAMILY = 'hw.family', LS_DEVICE = 'hw.device', LS_SUBJECTS = 'hw.subjects', LS_MEMBERS = 'hw.members';
 const APP_SALT = 'hw-fam-v1';
-const APP_VERSION = '20260920.4';
+const APP_VERSION = '20261009.1';
 /* 内置云服务配置：新设备/清缓存后免填，用户仍可在「云服务配置」中覆盖 */
 const DEFAULT_CLOUD = { url:'https://zevsijjzovakiypggsvm.supabase.co', key:'sb_publishable__XszjDRCwzeQSZIaWzDGoA_QY9FFW88' };
 const DEFAULT_SUBJECTS = ['语文','数学','英语','体育'];
@@ -750,7 +793,7 @@ function setSubjects(arr){
   return uniq;
 }
 /* 家庭成员身份默认选项；同步/加入家庭时弹窗选择，也可选「自定义」（机构+称谓） */
-const IDENTITIES = ['爸爸','妈妈','爷爷','奶奶','外公','外婆','哥哥','姐姐','自定义'];
+const IDENTITIES = ['爸爸','妈妈','爷爷','奶奶','外公','外婆','哥哥','姐姐','托管老师','自定义'];
 let stateData = { children:[], homework:[] };
 function loadChildren(){ return stateData.children; }
 function stampUpdated(a){ (a||[]).forEach(x=>{ if(x&&x.id) x.updatedAt=Date.now(); }); return a; }
@@ -983,6 +1026,25 @@ async function decBlob(str, key){
   }catch(e){ return null; }
 }
 
+/* —— 家长 PIN（免登录：看作业不用码；打卡/改数据才要。全家含托管老师共用一码） —— */
+const LS_PIN='hw.pin', LS_PIN_UNTIL='hw.pinUntil';
+async function pinHash(pin, salt){
+  const enc=new TextEncoder();
+  const base=await crypto.subtle.importKey('raw', enc.encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2', salt:enc.encode(String(salt)+'|pin'), iterations:60000, hash:'SHA-256'}, base, 256);
+  const b=new Uint8Array(bits); let s=''; for(let i=0;i<b.length;i++) s+=b[i].toString(16).padStart(2,'0');
+  return s;
+}
+function pinSaltNew(){ return 's'+Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
+function getPin(){ try{ return JSON.parse(localStorage.getItem(LS_PIN))||null }catch(e){ return null } }
+function setPin(o){ try{ localStorage.setItem(LS_PIN, JSON.stringify(o)); }catch(e){} }
+function clearPinStore(){ try{ localStorage.removeItem(LS_PIN); localStorage.removeItem(LS_PIN_UNTIL); }catch(e){} }
+function pinEnabled(){ const p=getPin(); return !!(p&&p.hash); }
+function pinUnlocked(){ return Number(localStorage.getItem(LS_PIN_UNTIL)||0) > Date.now(); }
+function pinUnlock(){ try{ localStorage.setItem(LS_PIN_UNTIL, String(Date.now()+5*60*1000)); }catch(e){} renderPinBadge(); }
+function pinLock(){ try{ localStorage.removeItem(LS_PIN_UNTIL); }catch(e){} renderPinBadge(); toast('已锁定，打卡需重新输入 PIN'); }
+async function verifyPin(pin){ const p=getPin(); if(!p||!p.hash) return false; try{ return (await pinHash(pin, p.salt))===p.hash; }catch(e){ return false; } }
+
 /* —— 同步原语 —— */
 async function pushFamily(kind, arr){
   if(!joined()) return;
@@ -1020,7 +1082,8 @@ async function pushFamilyMeta(){
   const sb=getSupabase(); if(!sb) return;
   try{
     const key=await famKey();
-    const payload=await encBlob({name:f.familyName, avatar:f.avatar||''}, key);
+    const p=getPin();
+    const payload=await encBlob({name:f.familyName, avatar:f.avatar||'', pinHash:(p&&p.hash)||'', pinSalt:(p&&p.salt)||''}, key);
     await sb.from('family_data').upsert({family_id:f.familyId, kind:'meta', payload, updated_at:Date.now()}, {onConflict:'family_id,kind'});
   }catch(e){ console.error('pushFamilyMeta',e); }
 }
@@ -1039,6 +1102,12 @@ async function pullFamilyMeta(){
       f.familyName = (meta.name!==undefined)? meta.name : f.familyName;
       f.avatar = (meta.avatar!==undefined)? meta.avatar : f.avatar;
       setFamily(f);
+      // PIN 随家庭同步：云端有值→写入本机；云端为空串→表示已关闭 PIN，清本机
+      if(meta.pinHash!==undefined){
+        if(meta.pinHash) setPin({hash:meta.pinHash, salt:meta.pinSalt||''});
+        else clearPinStore();
+        renderPinBadge();
+      }
     }
   }catch(e){ console.error('pullFamilyMeta',e); if(e && /解密失败/.test(e.message||'')) throw e; }
 }
@@ -1620,6 +1689,7 @@ const state={ tab:'homework', filter:'all', group:'date', childFilter:'all', edi
 /* ============ 渲染 ============ */
 function render(){
   updateBadges();
+  renderPinBadge();
   if(state.tab==='homework'){ renderHomework(); renderToday(); }
   else if(state.tab==='family') renderChildren();
   else if(state.tab==='settings') renderSettings();
@@ -1638,6 +1708,7 @@ function updateBadges(){
 }
 function renderSettings(){
   renderFamilyPanel();
+  renderPinSettings();
 }
 function switchTab(t){
   state.tab=t;
@@ -2142,6 +2213,94 @@ function resolveConfirm(v){
   document.getElementById('confirmModal').classList.remove('show');
   if(__confirmResolver){ __confirmResolver(v); __confirmResolver=null; }
 }
+
+/* —— 家长 PIN 弹窗（mode: verify=校验 / set=直接取值用于设置） —— */
+let __pinResolver=null, __pinBuf='', __pinMode='verify';
+function askPin(title, msg, mode){
+  const t=document.getElementById('pinTitle'), m=document.getElementById('pinMsg');
+  if(t) t.textContent=title||'🔒 家长 PIN';
+  if(m) m.textContent=msg||'打卡需家长确认，请输入 4 位 PIN';
+  __pinBuf=''; __pinMode=mode||'verify'; pinRenderDots();
+  document.getElementById('pinModal').classList.add('show');
+  return new Promise(res=>{ __pinResolver=res; });
+}
+function resolvePin(v){
+  const el=document.getElementById('pinModal'); if(el) el.classList.remove('show');
+  __pinBuf=''; pinRenderDots();
+  const r=__pinResolver; __pinResolver=null; if(r) r(v||'');
+}
+function pinRenderDots(){
+  const box=document.getElementById('pinDots'); if(!box) return;
+  const ds=box.querySelectorAll('.pin-dot');
+  for(let i=0;i<ds.length;i++) ds[i].className='pin-dot'+(i<__pinBuf.length?' on':'');
+}
+function pinKey(k){
+  if(k==='del'){ __pinBuf=__pinBuf.slice(0,-1); pinRenderDots(); return; }
+  if(__pinBuf.length>=4) return;
+  __pinBuf+=k; pinRenderDots();
+  if(__pinBuf.length>=4){
+    const val=__pinBuf;
+    if(__pinMode==='set'){ setTimeout(()=>resolvePin(val), 130); return; }
+    setTimeout(async ()=>{
+      const ok=await verifyPin(val);
+      if(ok){ pinUnlock(); resolvePin(val); }
+      else { toast('PIN 不正确，请重试'); __pinBuf=''; pinRenderDots(); }
+    }, 130);
+  }
+}
+/* 需要家长权限时调用：没设 PIN 或已解锁→放行；否则弹 PIN */
+async function requirePin(){
+  if(!pinEnabled()) return true;
+  if(pinUnlocked()) return true;
+  const v=await askPin('🔒 家长确认','打卡/修改需家长确认，请输入 4 位 PIN','verify');
+  return !!v;
+}
+/* 设置 / 修改 / 关闭 家长 PIN */
+async function setParentPin(){
+  if(!joined()){ toast('请先创建或加入家庭，PIN 才能同步给家人'); return; }
+  const needOld=pinEnabled();
+  if(needOld){
+    const old=await askPin('🔒 验证当前 PIN','修改 PIN 前请先输入当前的 4 位 PIN','verify');
+    if(!old) return;
+  }
+  const v1=await askPin('🔐 设置家长 PIN','请输入 4 位数字（全家与托管老师共用）','set');
+  if(!v1 || v1.length!==4){ if(v1) toast('PIN 需为 4 位数字'); return; }
+  const v2=await askPin('🔐 再输一次','请再次输入同样的 4 位数字','set');
+  if(v2!==v1){ toast('两次输入不一致，未修改'); return; }
+  const salt=pinSaltNew();
+  setPin({ hash: await pinHash(v1, salt), salt });
+  pinLock();
+  await pushFamilyMeta();
+  toast('家长 PIN 已设置，并同步到所有家人设备');
+  renderPinSettings(); renderPinBadge();
+}
+async function clearParentPin(){
+  if(!pinEnabled()){ toast('当前未设置家长 PIN'); return; }
+  const old=await askPin('🔒 验证当前 PIN','关闭前请先输入当前的 4 位 PIN','verify');
+  if(!old) return;
+  if(!(await showConfirm('关闭后，任何人打开这台设备都能直接打卡。确定关闭吗？'))) return;
+  clearPinStore();
+  await pushFamilyMeta();
+  toast('家长 PIN 已关闭');
+  renderPinSettings(); renderPinBadge();
+}
+function renderPinSettings(){
+  const box=document.getElementById('pinState'); if(!box) return;
+  if(pinEnabled()) box.innerHTML='<span style="color:var(--green)">已开启</span>（打卡需输入 PIN）';
+  else box.innerHTML='<span style="color:var(--sub)">未开启</span>（任何人都能打卡）';
+}
+function renderPinBadge(){
+  const b=document.getElementById('pinBadge'); if(!b) return;
+  if(!pinEnabled()){ b.hidden=true; return; }
+  b.hidden=false;
+  if(pinUnlocked()){ b.className='pin-badge open'; b.textContent='🔓 家长已解锁 · 点击锁定'; }
+  else { b.className='pin-badge'; b.textContent='🔒 打卡需家长 PIN'; }
+}
+function onPinBadgeClick(){
+  if(!pinEnabled()) return;
+  if(pinUnlocked()) pinLock();
+  else requirePin();
+}
 function celebrate(type, opts){
   const partialMsgs=['不错，已完成一部分，继续加油！','小步前进也是进步，接着来！','已经完成一部分啦，离完成更近一步！'];
   const fullMsgs=['全部完成，太棒了！👏','完美收工，给你点赞！⭐','作业清空，今天也很优秀！🎉'];
@@ -2176,6 +2335,7 @@ async function supportAuthor(){
 }
 async function toggleComplete(id){
   const all=loadHomework(); const h=all.find(x=>x.id===id); if(!h)return;
+  if(!(await requirePin())) return;
   if(isFullyDone(h)){
     if(!(await showConfirm('确定要把该作业标记为未完成吗？'))) return;
     // 取消打卡：恢复为未打卡（清空页码/子任务勾选，界面与按钮同步更新）
@@ -2208,8 +2368,10 @@ function renderCheckBody(){
   document.getElementById('checkBody').innerHTML=pageHtml+subHtml;
   document.getElementById('checkTitle').textContent = (h.content||'作业打卡').slice(0,30);
 }
-function openCheck(id){
-  const h=getH(id); if(!h)return; window.__chk=id; window.__chkDirty=false; window.__chkCompleted=false; window.__chkUncompleted=false;
+async function openCheck(id){
+  const h=getH(id); if(!h)return;
+  if(!(await requirePin())) return;
+  window.__chk=id; window.__chkDirty=false; window.__chkCompleted=false; window.__chkUncompleted=false;
   renderCheckBody();
   document.getElementById('checkModal').classList.add('show');
 }
